@@ -1,0 +1,4 @@
+-- 1) First get each customer’s cohort_month.
+-- 2) Then get monthly revenue per customer.
+-- 3) Aggregate revenue by cohort_month + revenue_month.
+-- 4) Finally apply a SUM() OVER(PARTITION BY cohort_month ORDER BY revenue_month) for cumulative values.
