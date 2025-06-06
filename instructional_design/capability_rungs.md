@@ -1,26 +1,69 @@
-## 🧱 Track A – Foundations (Beginner → Intermediate)
+## 🧱 Core SQL Capability Ladder (Universal)
 
+> **Audience:** Everyone (regardless of track)
+>
+> **Purpose:** Establish foundational and essential SQL fluency required to succeed in *any* track.
 
-| Rung | Rung Name                   | Key Snowflake Topics                                                      | Learning Objective                                                  | Hands-On Exercise Idea                                                                                                      |
-| ---- | --------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Exploring Your First Tables | `SELECT`, `LIMIT`, `ORDER BY`, Snowflake UI                               | Learn to explore structured data in Snowflake using simple queries. | Query a sample table for the top 10 rows sorted by a column; **Stretch**: explore a second table and compare record counts. |
-| 2    | Filtering What Matters      | `WHERE`, `AND`, `OR`, comparison operators                                | Learn to filter rows based on numeric and text conditions.          | Find high-revenue customers or products with filters; **Stretch**: use both numeric and text filters combined.              |
-| 3    | Columns on Demand           | `ALIAS`, expressions, built-in functions (`UPPER`, `ROUND`, `DATE_TRUNC`) | Learn to create derived columns and rename them.                    | Display a customer’s name in uppercase with their rounded order total; **Stretch**: truncate order dates to month.          |
-| 4    | Joining the Dots            | `JOIN` types, `ON` conditions                                             | Learn to combine rows from two tables using keys.                   | Join `orders` with `customers` to display full order records; **Stretch**: join a third table (`products`).                 |
-| 5    | Grouping for Insight        | `GROUP BY`, `HAVING`, aggregates (`SUM`, `AVG`, `COUNT`)                  | Learn to summarize data by category or time.                        | Count orders per customer and show top 5 by volume; **Stretch**: filter using `HAVING` and average order value.             |
-| 6    | Nesting & Logic             | `CASE`, subqueries in `SELECT`, `WHERE`                                   | Learn to apply conditional logic and basic subqueries.              | Classify customers into tiers based on total spend; **Stretch**: use a subquery to find above-average customers.            |
-| 7    | Organizing Your SQL         | `WITH` (CTE), `QUALIFY`, `ROW_NUMBER()`                                   | Learn to structure queries and filter ranked results.               | Return each customer's latest order; **Stretch**: show only top 3 customers by spend per region.                            |
-| 8    | Schema Discovery & Metadata | `INFORMATION_SCHEMA`, `SHOW TABLES`, `DESCRIBE`                           | Learn to self-serve data discovery in Snowflake.                    | List all columns and data types in key tables; **Stretch**: write a query to find all tables with >100K rows.               |
+| Rung | Name                        | Key SQL Topics                                                             | Learning Objective                                                         | Level        |
+| ---- | --------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------ |
+| C1   | Table Exploration           | `SELECT`, `LIMIT`, `ORDER BY`, schema inspection                           | Navigate tables and columns; preview structure and sample data.            | Beginner     |
+| C2   | Row Filtering               | `WHERE`, logical operators (`AND`, `OR`), `IN`, `BETWEEN`                  | Subset records based on conditions.                                        | Beginner     |
+| C3   | Column Derivation           | Expressions, `ALIAS`, built-in functions (`ROUND`, `UPPER`, etc.)          | Create derived columns for clearer insight.                                | Beginner     |
+| C4   | Table Joins                 | `JOIN`, `INNER`, `LEFT`, `ON` clauses                                      | Combine related data from multiple tables.                                 | Beginner     |
+| C5   | Aggregation & Grouping      | `GROUP BY`, aggregates (`SUM`, `AVG`, `COUNT`), `HAVING`                   | Summarize datasets by categories.                                          | Intermediate |
+| C6   | Conditional Logic           | `CASE`, simple subqueries                                                  | Add interpretive logic or tiered logic to queries.                         | Intermediate |
+| C7   | Feature Engineering Basics  | `CAST()`, `COALESCE()`, `CONCAT()`, `SUBSTRING()`, `TRIM()`                | Build robust derived fields and clean identifiers for consistent analysis. | Intermediate |
+| C8   | Structuring Queries         | `WITH` (CTE), `ROW_NUMBER()`, `QUALIFY`                                    | Write clean, layered, and reusable queries.                                | Intermediate |
+| C9   | Metadata & Discovery        | `INFORMATION_SCHEMA`, `SHOW`, `DESCRIBE`                                   | Understand the structure of unfamiliar datasets.                           | Intermediate |
+| C10  | Creating & Modifying Tables | `CREATE TABLE`, `CREATE TABLE AS SELECT`, `DROP`, `TRUNCATE`               | Create tables for testing or materialization.                              | Intermediate |
+| C11  | Data Reshaping              | Pivot wide: `GROUP BY` + aggregates, Pivot long: `UNION`, `CASE`, `FILTER` | Transform data to suit downstream use cases or visualization prep.         | Advanced     |
+| C12  | Snowflake-Specific Behavior | Time Travel, Cloning, Streams, Transient tables                            | Use Snowflake-native features for reproducibility and tracking.            | Advanced     |
 
-## ⚙️ Track B – Pro & Tuning (Intermediate → Advanced)
+## 🕵️ SQL Detective Ladder (Track-Specific)
 
-| Rung | Rung Name                  | Key Snowflake Topics                               | Learning Objective                                            | Hands-On Exercise Idea                                                                                             |
-| ---- | -------------------------- | -------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 1    | Clean, Clear, and Reusable | CTEs (`WITH`), nesting, aliasing best practices    | Structure multi-step queries for readability and reusability. | Build a query with 2–3 logical layers using CTEs; **Stretch**: refactor a nested query into CTEs.                  |
-| 2    | Subqueries Everywhere      | Scalar, correlated, and `EXISTS` subqueries        | Understand where and how subqueries affect query logic.       | Find customers who placed their first order in the last 30 days; **Stretch**: use correlated subquery in `SELECT`. |
-| 3    | Windowing the World        | `OVER`, `RANK`, `ROW_NUMBER`, partitions           | Use window functions to analyze data across rows.             | Return each product’s sales rank per month; **Stretch**: flag top-N per group with `QUALIFY`.                      |
-| 4    | Dates and Buckets          | `DATE_TRUNC`, `DATEDIFF`, derived time buckets     | Aggregate and compare data across date intervals.             | Compare monthly sales this year vs. last; **Stretch**: compute rolling 3-month totals using window functions.      |
-| 5    | Query Profile & Pruning    | Query Profile, `EXPLAIN`, pruning behavior         | Learn to inspect and optimize queries in Snowflake.           | Run and inspect a filtered query on a large table; **Stretch**: compare performance with and without pruning.      |
-| 6    | Data Types That Flex       | `VARIANT`, `FLATTEN`, semi-structured data         | Query and transform JSON data in Snowflake.                   | Extract nested values from a `VARIANT` column; **Stretch**: join flattened JSON with relational data.              |
-| 7    | Tuning for Scale           | `CLUSTER BY`, result caching, `MATERIALIZED VIEWS` | Learn to write queries that perform well on large datasets.   | Materialize top-selling products per region; **Stretch**: evaluate query runtime with vs. without materialization. |
-| 8    | Automate the Flow          | `TASKS`, `STREAMS`, `MERGE`                        | Set up SQL-based data pipelines for change tracking.          | Create a task that updates a table based on stream changes; **Stretch**: apply `MERGE` for upserts using a stream. |
+> **Focus:** Anomaly detection, data integrity, rule validation
+
+| Rung | Name                         | Key Topics & Tactics                                       | Skill Gained                                                  | Level        |
+| ---- | ---------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------- | ------------ |
+| D1   | NULLs & Gaps                 | `IS NULL`, `IS NOT NULL`, missing values                   | Identify absent or incomplete records                         | Beginner     |
+| D2   | Duplicates & Counts          | `GROUP BY`, `HAVING COUNT()>1`                             | Spot likely duplicates and unexpected record distributions    | Beginner     |
+| D3   | Anti-Joins & Orphans         | `LEFT JOIN` + `IS NULL`, `NOT EXISTS`                      | Detect mismatches and records missing logical links           | Intermediate |
+| D4   | Rule-Based Filters           | `CASE`, numeric or date validations                        | Encode business logic to catch rule violations                | Intermediate |
+| D5   | Time-Based Issues            | `DATEDIFF`, `LAG`, order consistency                       | Find temporal anomalies, churn risks, or invalid sequences    | Intermediate |
+| D6   | Feature Engineering I        | Combining fields, categorizing values                      | Construct identifiers, transform fields, patch missing values | Intermediate |
+| D7   | Feature Engineering II       | `CASE` + `COALESCE`, flag creation, conditional categories | Create reliable flags and business rule columns               | Intermediate |
+| D8   | Statistical Outliers         | `AVG`, `STDDEV`, z-scores, window analytics                | Detect numeric anomalies and unexpected patterns              | Advanced     |
+| D9   | Multi-Dataset Reconciliation | Multi-joins, comparative metrics                           | Audit consistency between sources or stages                   | Advanced     |
+| D10  | Auditing Row Changes         | Time Travel, Streams, Change Data Capture                  | Track and validate changes to data over time                  | Advanced     |
+
+## ⚙️ Query Optimizer Ladder (Track-Specific)
+
+> **Focus:** Query performance, resource usage, cost-efficiency
+
+| Rung | Name                        | Key Topics & Tactics                                     | Skill Gained                                             | Level        |
+| ---- | --------------------------- | -------------------------------------------------------- | -------------------------------------------------------- | ------------ |
+| Q1   | Targeted Projections        | `SELECT` specific columns, avoid `*`                     | Reduce scanned data and improve clarity                  | Beginner     |
+| Q2   | Filter Early                | Filter pushdown, predicate order                         | Minimize row scan and join volume                        | Beginner     |
+| Q3   | Join Order Optimization     | Reorder joins, small-to-large logic                      | Improve execution speed via better join logic            | Intermediate |
+| Q4   | Avoid Correlated Subqueries | Convert to joins, use aggregations                       | Enhance scalability and avoid row-by-row execution       | Intermediate |
+| Q5   | Use QUALIFY Smartly         | `ROW_NUMBER()` + `QUALIFY` instead of subqueries         | Efficient row filtering without nesting                  | Intermediate |
+| Q6   | Feature Engineering III     | `MIN()`, `MAX()`, normalization, ratio creation          | Scale and derive percentage-based features efficiently   | Intermediate |
+| Q7   | Explain & Inspect           | `EXPLAIN`, Query Profile, performance metrics            | Debug and measure query performance                      | Advanced     |
+| Q8   | Materialization & Caching   | CTEs vs temp tables, result caching, `MATERIALIZED VIEW` | Make decisions that leverage Snowflake’s execution model | Advanced     |
+| Q9   | Cost Estimation Awareness   | Snowflake credit use, storage vs compute cost trade-offs | Optimize cost in daily querying decisions                | Advanced     |
+
+## 📊 Business Strategist Ladder (Track-Specific)
+
+> **Focus:** Data storytelling, cohorting, trends, segmentation, and visual-readiness
+
+| Rung | Name                        | Key Topics & Tactics                                             | Skill Gained                                                    | Level        |
+| ---- | --------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------- | ------------ |
+| B1   | Aggregates for Insight      | `GROUP BY`, `SUM`, `COUNT`, `AVG`                                | Produce summary metrics and KPIs                                | Beginner     |
+| B2   | Time Series Buckets         | `DATE_TRUNC`, `MONTH`, `YEAR`, etc.                              | Track patterns over time                                        | Beginner     |
+| B3   | Ranking & Prioritization    | `RANK()`, `ROW_NUMBER()`, `PARTITION BY`                         | Sort and compare within business dimensions                     | Intermediate |
+| B4   | Customer Segmentation       | Joins + logic to group customers                                 | Define audiences, cohorts, and personas                         | Intermediate |
+| B5   | Feature Engineering IV      | `CASE`, `CONCAT()`, `SUBSTRING()`, `TRIM()`, `COALESCE()`        | Derive segment flags, create clean dimensions                   | Intermediate |
+| B6   | Trend & Change Analysis     | `LAG`, `LEAD`, % change, MoM, YoY                                | Analyze directional movement or behavioral shifts               | Intermediate |
+| B7   | Funnel & Retention Metrics  | Multi-step filters, conversions, reorders                        | Track business funnels and customer journeys                    | Advanced     |
+| B8   | Share & Contribution Logic  | `% of total`, windowed shares, segment contributions             | Visual-ready metrics like market share or contribution by group | Advanced     |
+| B9   | KPI Tables & Dashboard Prep | Creating wide flat tables, unpivoting with `UNION`, visual logic | Prepare datasets for visualization tools                        | Advanced     |
