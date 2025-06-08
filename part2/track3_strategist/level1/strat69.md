@@ -5,14 +5,14 @@
 > **Difficulty:** 4 / 10
 
 ### Business context
-To better understand where our revenue comes from, product managers want to know **which items generate the most net revenue**. A few high-performing parts might drive a large share of total business — uncovering these will help focus future marketing, inventory, and supply efforts.
+As part of the ongoing **Momentum Matters** initiative, the strategy team now wants to shift focus from customer segments to **individual product performance**. They suspect that a few high-performing parts may account for a substantial share of TPCH’s total revenue.
 
-Your task is to produce a ranked list of the **top 10 parts by total net revenue**. In addition to showing the raw revenue values, you should also compute **what share of total revenue** each part contributes — helping the business assess product concentration risk.
+Your task is to identify the **top 10 parts by total net revenue** and calculate their **contribution share** — i.e., what percentage of total company revenue they represent. This will help the executive team understand whether TPCH’s portfolio is broadly balanced, or overly reliant on a small set of products.
 
 **Business logic & definitions:**
 * net revenue = `L_EXTENDEDPRICE * (1 - L_DISCOUNT)`
 * part name = `P_NAME` (from `PART`)
-* revenue share = part revenue ÷ total revenue (of whole portfolio!)
+* revenue share = part revenue ÷ total revenue (across all parts)
 
 ### Starter query
 ```sql
@@ -38,17 +38,16 @@ LIMIT 10;
 
 #### How to think about it
 
-Start by calculating total net revenue per part. Then compute **total revenue across all parts** using a window function with no partition. Use this to calculate the proportion for each part.
+Start by computing net revenue per part using a `JOIN` and `GROUP BY`. Then calculate the total revenue across all parts using a **window function** without partitioning. Finally, compute the **percent-of-total** metric.
 
 #### Helpful SQL concepts
 
-`JOIN`, `GROUP BY`, `SUM()`, window `SUM() OVER ()`
+`JOIN`, `GROUP BY`, `SUM()`, `OVER ()`
 
 ```sql
 SELECT
   category,
-  SUM(metric) AS total,
-  SUM(metric) / SUM(SUM(metric)) OVER () AS pct_of_total
+  SUM(metric) / SUM(SUM(metric)) OVER () AS share
 FROM …
 GROUP BY category;
 ```
@@ -65,7 +64,7 @@ SELECT
     P.P_NAME AS part_name,
     SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) AS net_revenue,
     SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) / 
-      SUM(SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT))) OVER () AS pct_of_total_revenue
+        SUM(SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT))) OVER () AS pct_of_total_revenue
 FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
 JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART P
   ON L.L_PARTKEY = P.P_PARTKEY
@@ -77,7 +76,7 @@ LIMIT 10;
 <details>
 <summary>Alternative query using CTE</summary>
 
-A CTE is often considered more readable and modular, however, in this case, it would be slightly less performant.
+This version separates revenue calculation and overall total using a `CROSS JOIN`. Slightly more readable, but marginally less performant on large data.
 
 ```sql
 WITH part_revenue AS (
@@ -103,27 +102,27 @@ LIMIT 10;
 ```
 </details>
 
-
 #### Why this works
 
-This query first calculates net revenue per part, then uses a **window function without partitioning** to compute the total net revenue across all parts. Each row’s contribution is expressed as a percentage of that total — allowing clear visibility into product concentration.
+The query calculates per-part net revenue, and uses a **window function without partition** to compute the overall revenue total. This avoids subqueries and gives a **percent-of-total** metric in a single step.
 
 #### Business answer
 
-The top 10 parts do not account for significant portions of the total revenue, with limited differentiation in the top 10. 
+The top 10 products contribute a surprisingly small percentage of overall revenue — suggesting that TPCH has a **diversified portfolio** with no overexposure to a single product line. This is a healthy baseline, but further investigation may reveal if margins tell a different story.
 
 #### Take-aways
 
-* Window functions can compute totals across the whole dataset for % calculations.
-* Revenue share helps contextualize raw dollar values in business decision-making.
-* `OVER ()` is a powerful SQL feature for dataset-wide metrics without subqueries.
-* Top-N queries can and should go beyond just listing — they can explain contribution.
+* Window functions like `SUM(...) OVER ()` are ideal for full-table comparisons.
+* Percent-of-total metrics help contextualize raw figures for strategic insights.
+* You can compute contribution shares inline without needing nested queries.
+* A balanced top 10 may look healthy — but profitability might still vary sharply.
 
 </details>
 
 <details>
 <summary>🎁 Bonus Exercise (click to expand)</summary>
 
-Calculate the **cumulative revenue share** (running total of `pct_of_total_revenue`) ordered by descending revenue. What % of total revenue is covered by the top 3 products? The top 5?
+Add a column that shows the **cumulative revenue share** (running total ordered by descending revenue).  
+Which products together cover 25% of total revenue? How many are needed to reach 50%?
 
 </details>

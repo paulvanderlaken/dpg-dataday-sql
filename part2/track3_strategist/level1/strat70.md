@@ -1,21 +1,24 @@
-## ex70: Top 5 Products per Nation — Wide Format Table
+## ex70: Top 3 Products per Nation — Ranked Long Format
 
 > **Type:** Core | **Track:** Business Strategist  
 >
 > **Difficulty:** 5 / 10
 
 ### Business context
-While we could not uncover clear revenue drivers in our global portfolio, there might be specific products that generate **most of the local, country-based revenue**. 
+Continuing the **Momentum Matters** initiative, leadership now wants to understand **which products drive local performance**. While global rankings give a high-level view, true business insight comes from seeing which parts dominate **within each country**.
 
-Instead of listing rows for each product, executives have requested a **pivoted summary table**: one row per nation, with the IDs of the **top 3 parts** listed as columns.
+You’ve been asked to deliver a long-format breakdown of the **top 3 revenue-generating parts for each nation**. The data will support:
+- Local marketing efforts
+- Country-level procurement alignment
+- Regional product tailoring
 
-Your task is to identify the **top 3 revenue-generating products per nation**, and format the output so that each column shows the part key for that rank (`top_part_1`, `top_part_2`, `top_part_3`). This table will be directly copied into presentation slides, so clarity and structure matter.
+Your output should be structured **one row per part per country**, with its local rank and revenue value. A pivoted version for executive slides will follow in the next assignment.
 
 **Business logic & definitions:**
 * net revenue = `L_EXTENDEDPRICE * (1 - L_DISCOUNT)`
-* part ID = `PART_KEY`
-* customer nation = `N_NAME` from the customer side
-* output structure = one row per nation, three columns (`top_part_1` → `top_part_3`)
+* part ID = `P_PARTKEY`
+* customer nation = `N_NAME` (from `CUSTOMER` → `NATION`)
+* output = `(nation, part_key, net_revenue, part_rank)` for top 3 parts per nation
 
 ### Starter query
 ```sql
@@ -50,19 +53,14 @@ LIMIT 10;
 
 #### How to think about it
 
-First, calculate the total net revenue per `(nation, part)` pair. Then use `RANK()` or `ROW_NUMBER()` with a `PARTITION BY NATION` to assign top 3 ranks. Finally, pivot the output so each rank becomes a column using a `CASE WHEN` pattern and grouped `MAX()` aggregation.
+Start by calculating **net revenue per (nation, part)**. Then use `ROW_NUMBER()` or `RANK()` to find the top 3 parts **per nation**, ordered by revenue. Keep the data in long format — one row per part, not one row per nation.
 
 #### Helpful SQL concepts
 
-`RANK()`, `ROW_NUMBER()`, `PARTITION BY`, `CASE`, `MAX()`, conditional pivoting
+`ROW_NUMBER()`, `PARTITION BY`, `ORDER BY`, `QUALIFY`
 
 ```sql
-SELECT
-  nation,
-  MAX(CASE WHEN rank = 1 THEN part END) AS top_part_1,
-  ...
-FROM ranked_parts
-GROUP BY nation;
+ROW_NUMBER() OVER (PARTITION BY country ORDER BY revenue DESC)
 ```
 
 </details>
@@ -84,51 +82,39 @@ WITH part_revenue AS (
   JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART P ON L.L_PARTKEY = P.P_PARTKEY
   JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.NATION N ON C.C_NATIONKEY = N.N_NATIONKEY
   GROUP BY N.N_NAME, P.P_PARTKEY
-),
-ranked_parts AS (
-  SELECT
-    nation,
-    part_key,
-    net_revenue,
-    ROW_NUMBER() OVER (PARTITION BY nation ORDER BY net_revenue DESC) AS rank
-  FROM part_revenue
-),
-pivoted AS (
-  SELECT
-    nation,
-    MAX(CASE WHEN rank = 1 THEN part_key END) AS top_part_1,
-    MAX(CASE WHEN rank = 2 THEN part_key END) AS top_part_2,
-    MAX(CASE WHEN rank = 3 THEN part_key END) AS top_part_3
-  FROM ranked_parts
-  WHERE rank <= 3
-  GROUP BY nation
 )
-SELECT * FROM pivoted
-ORDER BY nation;
+SELECT
+  nation,
+  part_key,
+  net_revenue,
+  ROW_NUMBER() OVER (PARTITION BY nation ORDER BY net_revenue DESC) AS part_rank
+FROM part_revenue
+QUALIFY part_rank <= 3
+ORDER BY nation, part_rank;
 ```
 
 #### Why this works
 
-This pattern first ranks parts by revenue within each nation, then pivots those rankings into columns. It cleanly separates the steps: aggregation → ranking → reshaping — and results in a readable, presentation-ready output.
-
-> Note: Often it's preferable to keep data in a long format and perform the pivot in your BI tool.
+This query first computes revenue per part per nation, then ranks each part within its country. By using `ROW_NUMBER()` + `PARTITION BY`, you isolate the top 3 for every nation without needing to hardcode or loop.
 
 #### Business answer
 
-Each nation has a distinct set of top-revenue parts. While some products appear frequently across countries, others are nation-specific — suggesting potential for localized marketing or sourcing strategies.
+This ranking reveals **localized bestsellers** — enabling marketing and procurement teams to align strategies to national preferences. Some parts appear across many countries, while others dominate in just one — hinting at regional demand patterns.
 
 #### Take-aways
 
-* Use `ROW_NUMBER()` or `RANK()` to create ranked lists within groups.
-* Convert long-format rankings into wide-format dashboards using `CASE` + `MAX()`.
-* Clean separation of logic into CTEs helps with debugging and readability.
-* Wide tables are better suited for presentation — long tables are better for deep dives.
+* Use `ROW_NUMBER()` + `PARTITION BY` to rank items within grouped categories.
+* Long-format output is better for follow-up pivoting and detailed analysis.
+* Even simple group-based ranking can yield actionable geographic insights.
+* `QUALIFY` helps filter directly on window function results without nesting.
 
 </details>
 
 <details>
 <summary>🎁 Bonus Exercise (click to expand)</summary>
 
-Add a column for each product showing its **revenue share within the nation** (as a percentage of total revenue from that nation). Which nations are more top-heavy?
+Add a column showing each part's **revenue share within its nation**.
+
+Which nations are most dominated by a single product? Which have a flatter distribution?
 
 </details>

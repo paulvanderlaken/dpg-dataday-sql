@@ -1,66 +1,52 @@
-## ex71: Monthly Revenue Share of Top-Selling Product
+## ex71: Pivoted Part Rankings per Nation — Executive View
 
 > **Type:** Core | **Track:** Business Strategist  
 >
 > **Difficulty:** 6 / 10
 
 ### Business context
-Executives want to understand **how dependent our revenue is on single best-selling items**. Specifically, they’ve asked:  
-> “For each month since 1997, what percentage of total revenue came from just the #1 part?”
+In the previous step of the **Momentum Matters** initiative, you identified the top 3 revenue-generating products per country. Now, the executive team wants a **presentation-ready summary**: one row per nation, with the **top 3 part keys and their revenue shares side-by-side**.
 
-Your task is to compute, for each month:
-- the **total revenue**,
-- the **revenue from the highest-grossing part**, and
-- the resulting **percentage share**.
+This format makes it easy to spot:
+- Local bestsellers
+- Over-concentration (e.g. if a single product accounts for half the national revenue)
+- Balanced vs. skewed demand across countries
 
-This will help identify periods where the company may have been **over-reliant on a single product** — or conversely, times when revenue was more diversified.
-
-> 📊 **Once you’ve run the query, create a bar or line chart** in Snowflake:
-> - **X-axis**: month  
-> - **Y-axis**: revenue share of the top part (as a percentage)  
-> - **Chart title suggestion**: "Top Product Monthly Revenue Share"
+This pivoted version will feed directly into executive dashboards and board slides.
 
 **Business logic & definitions:**
 * net revenue = `L_EXTENDEDPRICE * (1 - L_DISCOUNT)`
-* month = `DATE_TRUNC('MONTH', O_ORDERDATE)`
-* use `RANK()` within each month to find the top 1 part
-* calculate share = top part revenue ÷ total revenue that month
-
-### Starter query
-```sql
--- Explore how part keys and order dates relate to revenue
-SELECT
-    P.P_PARTKEY,
-    O.O_ORDERDATE,
-    L.L_EXTENDEDPRICE,
-    L.L_DISCOUNT
-FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O
-JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
-  ON O.O_ORDERKEY = L.L_ORDERKEY
-JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART P
-  ON L.L_PARTKEY = P.P_PARTKEY
-LIMIT 10;
-```
+* part rank = revenue rank per nation (1 = highest)
+* revenue share = part revenue ÷ total revenue within that nation
+* Output format:
+  - Columns: `top_part_1`, `share_1`, `top_part_2`, `share_2`, `top_part_3`, `share_3`
+  - One row per nation
 
 ### Required datasets
 
+* `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER`
 * `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS`
 * `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM`
 * `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART`
+* `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.NATION`
 
 <details>
 <summary>💡 Hint (click to expand)</summary>
 
 #### How to think about it
 
-Start by computing net revenue per `(month, part_key)`. Then:
-1. Use `RANK()` to find the top part per month.
-2. Compute total revenue per month as a second CTE.
-3. Join both together to calculate the percentage share.
+Start with the same query used in exercise 70, but this time:
+- Add a `revenue_share` using a `SUM(...) OVER (PARTITION BY nation)`
+- Use `CASE WHEN` logic to assign values into pivoted columns for rank 1, 2, and 3
+- Use `MAX(...)` aggregation to reshape into a wide format
 
 #### Helpful SQL concepts
 
-`GROUP BY`, `SUM()`, `RANK() OVER (PARTITION BY … ORDER BY …)`, `QUALIFY`, `JOIN`, arithmetic
+`ROW_NUMBER()`, `PARTITION BY`, `SUM(...) OVER`, `CASE`, `MAX()`
+
+```sql
+MAX(CASE WHEN rank = 1 THEN part_key END) AS top_part_1
+```
 
 </details>
 
@@ -70,70 +56,72 @@ Start by computing net revenue per `(month, part_key)`. Then:
 #### Working query
 
 ```sql
-WITH monthly_part_revenue AS (
+WITH part_revenue AS (
   SELECT
-    DATE_TRUNC('MONTH', O.O_ORDERDATE) AS order_month,
+    N.N_NAME AS nation,
     P.P_PARTKEY AS part_key,
     SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) AS net_revenue
-  FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O
+  FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER C
+  JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O ON C.C_CUSTKEY = O.O_CUSTKEY
   JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L ON O.O_ORDERKEY = L.L_ORDERKEY
   JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART P ON L.L_PARTKEY = P.P_PARTKEY
-  WHERE O.O_ORDERDATE >= '1997-01-01'
-  GROUP BY order_month, part_key
+  JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.NATION N ON C.C_NATIONKEY = N.N_NATIONKEY
+  GROUP BY N.N_NAME, P.P_PARTKEY
 ),
-top_part_per_month AS (
+ranked AS (
   SELECT
-    order_month,
+    nation,
     part_key,
     net_revenue,
-    RANK() OVER (PARTITION BY order_month ORDER BY net_revenue DESC) AS part_rank
-  FROM monthly_part_revenue
-  QUALIFY part_rank = 1
+    net_revenue / SUM(net_revenue) OVER (PARTITION BY nation) AS revenue_share,
+    ROW_NUMBER() OVER (PARTITION BY nation ORDER BY net_revenue DESC) AS part_rank
+  FROM part_revenue
 ),
-monthly_total AS (
-  SELECT
-    order_month,
-    SUM(net_revenue) AS total_revenue
-  FROM monthly_part_revenue
-  GROUP BY order_month
+top3 AS (
+  SELECT * FROM ranked WHERE part_rank <= 3
 )
 SELECT
-    t.order_month,
-    t.part_key AS top_part_key,
-    t.net_revenue AS top_part_revenue,
-    m.total_revenue,
-    t.net_revenue / m.total_revenue AS top_part_share
-FROM top_part_per_month t
-JOIN monthly_total m
-  ON t.order_month = m.order_month
-ORDER BY t.order_month;
+  nation,
+  MAX(CASE WHEN part_rank = 1 THEN part_key END) AS top_part_1,
+  MAX(CASE WHEN part_rank = 1 THEN revenue_share END) AS share_1,
+  MAX(CASE WHEN part_rank = 2 THEN part_key END) AS top_part_2,
+  MAX(CASE WHEN part_rank = 2 THEN revenue_share END) AS share_2,
+  MAX(CASE WHEN part_rank = 3 THEN part_key END) AS top_part_3,
+  MAX(CASE WHEN part_rank = 3 THEN revenue_share END) AS share_3
+FROM top3
+GROUP BY nation
+ORDER BY nation;
 ```
 
 #### Why this works
 
-We first compute monthly revenue by part, then rank the parts to isolate the top performer per month. We then join that with the total revenue for the same month to calculate the share — giving insight into product concentration over time.
+The query uses `ROW_NUMBER()` to identify top parts per nation, calculates each part’s **share of national revenue**, and then uses `CASE WHEN` + `MAX()` to pivot the data into wide format.
 
-Your visual should look as follows:
-
-![alt text](../../../img/solutions/ex71-line-chart.png)
+> 💡 **Alternative approach**: Snowflake also supports a `PIVOT` clause — but the `CASE WHEN` method is more portable and easier to read/debug when the number of columns is small and fixed.
 
 #### Business answer
 
-The resulting chart shows that also over time, our revenue is never driven by a single item in our portfolio. 
-No single product accounts for anywhere near a percent of our total monthly revenue. Though the recent spike is concerning.  
-This metric could help track dependency and resilience in the product portfolio.
+This pivoted summary makes it immediately clear:
+- Which nations are **dominated by a single product**
+- Which have a **broad top 3**
+- Which countries have **the same top performers**, hinting at global winners
+
+This view enables faster executive decision-making around localization and focus.
 
 #### Take-aways
 
-* Use `RANK()` with `PARTITION BY` to isolate top performers within groups.
-* Combining CTEs allows you to layer logic clearly and scalably.
-* Time + entity grouping unlocks powerful trends.
+* Pivoting ranked data is a common pattern in executive reporting.
+* `CASE WHEN` + `MAX()` gives explicit control over reshaping.
+* `SUM(...) OVER` helps calculate in-group percentages elegantly.
+* A visual-ready table can drive faster insights than long-format lists.
 
 </details>
 
 <details>
 <summary>🎁 Bonus Exercise (click to expand)</summary>
 
-Does the conclusion change if one looks at weekly or daily data? 
+Repeat this exercise using `P_BRAND` instead of `P_PARTKEY`.
+
+Which brands dominate in which countries? Do the same brands top multiple regions?
 
 </details>

@@ -25,47 +25,13 @@ Each challenge is:
 
 ### 🔀 Part 2: Track-Based Mini-Challenges
 
-Choose your own adventure from three focused tracks — each emphasizing a different analytical lens:
+In the second half of the workshop, you’ll choose from one of three themed tracks — each focused on a different mindset: auditing (Detective), optimizing (Engineer), or strategic planning (Strategist).
 
-<details>
-<summary>🕵️ <b>SQL Detective</b> – Investigate Data Integrity & Spot Anomalies </summary>
-
-This track encourages you to **think like a data auditor or QA engineer**. You'll work on finding missing links, detecting duplicates, identifying outliers, and verifying rule consistency.
-
-**Key skills**:  
-- Anti-joins, `LEFT JOIN` + `IS NULL`, `NOT EXISTS`  
-- Logical validation using `CASE`, `DATEDIFF`, `LAG`, `RANK`  
-- Auditing for temporal gaps, anomalies, and missing relationships  
-</details>
-
-<details>
-<summary>⚙️ <b>Query Optimizer</b> – Refactor for Performance & Cost</summary>
-
-Designed to **help you write better-performing SQL**, this track introduces cost-awareness, modular queries, and Snowflake-specific strategies.
-
-**Key skills**:  
-- Filter pushdown, predicate logic  
-- Replace correlated subqueries with set-based joins  
-- Leverage `QUALIFY`, CTEs, and materialization strategies  
-- Understand query execution plans via `EXPLAIN`  
-</details>
-
-<details>
-<summary>📊 <b>Business Strategist</b> – Prepare Data for Strategic Insights</summary>
-
-This track challenges you to **transform and organize data** for analysis and storytelling. 
-Build reusable queries that support trend detection, ranking, comparisons, and dashboard-ready summaries.
-
-**Key skills**:  
-* Time bucketing, smoothing, and percent change
-* Pivoting and CASE logic for matrix outputs
-* Multi-metric cohort and group comparisons
-* Rolling window aggregations
-* Building datasets optimized for charts and storytelling
-
-</details>
+You’ll work through 5–7 exercises that form a coherent case.  
+👉 See [Track Narratives & Case Arcs](#-track-narratives--case-arcs) for full storylines and learning goals.
 
 ![alt text](img/three-tracks-explainer.png)
+
 ---
 
 ## 💾 The TPCH Database
@@ -175,6 +141,70 @@ This workshop is **non-linear and learner-led**. You are in control.
 * Done with one path? Switch it up and keep learning.
 
 > **No pressure to finish everything. Focus on quality over quantity.**
+
+---
+
+Excellent direction — here's the updated `## 🧵 Case-Driven Learning Paths` section, now organized by track and tiered by level. This format mirrors your workshop structure and enhances clarity for learners navigating the repo.
+
+---
+
+## 🧵 Case-Driven Learning Paths
+
+This workshop includes four distinct tracks, each with **progressive narrative cases** designed to simulate real-world analytics and engineering workflows. Each arc builds from a realistic business scenario and layers complexity through multiple exercises.
+
+### 🕵️ SQL Detective Track
+
+#### **Level 1+2: Sourcing Clues from the Data** (ex60–ex64)
+
+> **A sales anomaly has surfaced.**
+> As a data detective, you’re tasked with investigating inconsistencies in ordering behavior, supplier patterns, and missing links between countries.
+
+You’ll work through progressively harder analytical joins, anti-joins, group checks, and matching logic — all framed as a business investigation.
+
+🔍 Output: Mismatch tables, filtered diagnostics, investigative joins
+
+---
+
+### 🛠️ Query Optimizer Track
+
+#### **Level 1+2: Code Cleanup Mission**
+
+> **You’re the new engineer on the analytics team.**
+> Your first task: refactor a pile of slow, unoptimized legacy queries that are wasting compute and confusing your teammates.
+
+Each assignment gives you an inefficient query that technically “works” — but performs poorly. You’ll diagnose bottlenecks and rewrite smarter versions using best practices.
+
+⚙️ Output: Clean, performant queries — and performance reflection on row scan savings
+
+
+---
+
+### 🧠 Business Strategist Track
+
+#### **Level 1: Momentum Matters**
+
+> **The Strategy Director needs your help.**
+> You’ve been asked to identify TPCH’s strongest growth signals — and its hidden risks — across time, product lines, and customer segments.
+
+You’ll start by confirming which years are complete and safe for trend analysis, then build toward uncovering concentration risks and segment-level momentum.
+This arc builds critical business awareness and time-series fluency.
+
+🔍 Output: Mismatch tables, filtered diagnostics, investigative joins
+
+---
+
+#### **Level 2: Margin Matters**
+
+> **The CFO is concerned.**
+> Revenue is up — but are we actually making money? You’re asked to assess profitability at every level: product, supplier, and region.
+
+You’ll trace margin performance across parts and suppliers, visualize strategic quadrants of high-volume vs. high-margin items, and even compute correlation coefficients and their statistical significance.
+
+📊 Output: Strategic quadrant maps, profit-risk matrices, correlation diagnostics
+
+---
+
+Each track’s case arc is optional — but highly recommended for learners who want to **think like problem-solvers, engineers, or analysts**, not just query writers.
 
 ---
 

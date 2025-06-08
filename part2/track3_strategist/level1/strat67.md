@@ -5,12 +5,14 @@
 > **Difficulty:** 3 / 10
 
 ### Business context
-You’ve just been asked to support a strategic revenue deep dive for the finance team. 
-Before doing any calculations, you want to grasp which **years have complete order data** — and how the business performed in those years. 
-Hence, your task is three-fold:
-1. **Group the orders by year** and show the **date range** of activity per year.
-2. Include key **summary statistics** per year: total gross revenue, total discounts, and taxes.
-3. Visualize gross and net revenue in a line chart using Snowflake's built-in functionality.
+This assignment kicks off the **Momentum Matters** initiative — a structured effort by TPCH’s Strategy Director to analyze growth trends, portfolio performance, and commercial dependencies across years, products, and customer groups.
+
+Before diving into any detailed calculations, it’s critical to confirm **which years contain complete data**. Inconsistent time coverage can lead to misleading metrics. You’ve been asked to:
+1. Identify the **yearly date ranges** of order activity,
+2. Calculate **basic summary stats** (gross revenue, discounts, and taxes),
+3. Confirm which years can be trusted for year-over-year trend analysis.
+
+This foundational check will inform the scope of future dashboards and strategic evaluations.
 
 **Business logic & definitions:**
 * order year = `YEAR(O_ORDERDATE)`
@@ -95,7 +97,7 @@ Your Snowflake chart could look as follows:
 
 #### Business answer
 
-The year **1997** is the most recent full year of data, with complete coverage from January to December. It also has the highest gross and net revenue — making it the best candidate for deeper revenue analysis.
+The year **1997** is the most recent full year of data, with complete coverage from January to December. It also has the highest gross and net revenue — making it the best candidate for deeper revenue analysis in the Momentum Matters series.
 
 #### Take-aways
 

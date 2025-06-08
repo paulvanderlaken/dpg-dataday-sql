@@ -5,7 +5,9 @@
 > **Difficulty:** 4 / 10
 
 ### Business context
-Now that we’ve confirmed 1997 is the most recent full year of data, it’s time to dive into **how revenue has evolved over time**. The strategy team wants to see **monthly revenue trends** starting from January 1997 — both in total and broken down by **customer segment**. This analysis will form the backbone of a recurring executive dashboard.
+As part of the **Momentum Matters** initiative, you’ve confirmed that 1997 is the most recent full year of order data. Leadership now wants to understand **how revenue evolved month by month**, and how performance varied **across customer segments**.
+
+This breakdown will form the backbone of a **recurring executive dashboard**, helping TPCH track seasonal trends, identify outperforming segments, and plan targeted commercial actions.
 
 Your task is to prepare a dataset suitable for use in **Snowflake’s built-in time series chart**. Make sure the output includes:
 - the **month** (e.g., 1997-01, 1997-02, …),
@@ -64,7 +66,7 @@ SELECT
   segment,
   SUM(price * (1 - discount))
 FROM …
-GROUP BY 1, 2;
+GROUP BY DATE_TRUNC('MONTH', order_date), segment;
 ```
 
 </details>
@@ -75,18 +77,26 @@ GROUP BY 1, 2;
 #### Working query
 
 ```sql
-SELECT
+WITH dated_orders AS (
+  SELECT
     DATE_TRUNC('MONTH', O.O_ORDERDATE) AS order_month,
     C.C_MKTSEGMENT AS customer_segment,
-    SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) AS net_revenue
-FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O
-JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
-  ON O.O_ORDERKEY = L.L_ORDERKEY
-JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER C
-  ON O.O_CUSTKEY = C.C_CUSTKEY
-WHERE O.O_ORDERDATE >= '1997-01-01'
-GROUP BY 1, 2
-ORDER BY 1, 2;
+    L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT) AS net_revenue
+  FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O
+  JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
+    ON O.O_ORDERKEY = L.L_ORDERKEY
+  JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER C
+    ON O.O_CUSTKEY = C.C_CUSTKEY
+  WHERE O.O_ORDERDATE >= '1997-01-01'
+)
+
+SELECT
+  order_month,
+  customer_segment,
+  SUM(net_revenue) AS net_revenue
+FROM dated_orders
+GROUP BY order_month, customer_segment
+ORDER BY order_month, customer_segment;
 ```
 
 #### Why this works
@@ -98,14 +108,15 @@ Your Snowflake chart could look as follows:
 
 #### Business answer
 
-Once plotted, the chart shows a clear March 1997 revenue spike — but some segments spike more than others. It also shows how revenue flattens or varies by group across the year.
+The chart shows stable monthly revenue through 1997 and early 1998, with all customer segments contributing consistently. No single segment dominates, which signals a well-diversified revenue base.
 
 #### Take-aways
 
 * Use `DATE_TRUNC('MONTH', …)` for monthly trend analysis.
-* Join with `CUSTOMER` for segmentation overlays.
 * Clean structure makes the output **chart-ready** in Snowflake.
 * Always validate output format before visualizing: `(time, category, metric)`.
+* Segment overlays reveal whether growth is **broad-based or concentrated**.
+* Incomplete months should be excluded from trend or seasonality analysis to avoid false signals.
 
 </details>
 

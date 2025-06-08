@@ -108,26 +108,29 @@
 
 ---
 
-### Track 3: Business Strategist
+### Track 3: 🧠 Business Strategist
 
-#### Beginner → Intermediate
+#### Level 1: Beginner → Intermediate: Momentum Matters
 
-| Ex # | Title                                       | Business Question                                                                                     | SQL Concept Ladder (B1–B2)                         | Difficulty | Dataset Familiarity Focus                     | Track              | Core/Stretch | Notes                                                                                      |
-|:----:|---------------------------------------------|-------------------------------------------------------------------------------------------------------|---------------------------------------------------|:----------:|------------------------------------------------|--------------------|:-------------:|--------------------------------------------------------------------------------------------|
-| ex67 | Yearly Order Coverage and Summary Stats     | “Which years have complete order data, and what are the revenue and discount totals per year?”       | `GROUP BY`, `MIN()`, `MAX()`, expressions (B1)     | 3          | ORDERS, LINEITEM                               | Business Strategist | Core         | Introduces year-based grouping and summary statistics; confirms coverage for trend analysis |
-| ex68 | Monthly Revenue Trend by Segment (Since 1997) | “How did revenue evolve month by month since 1997, broken down by segment?”                         | `JOIN`, `DATE_TRUNC`, `GROUP BY` (B2, B9)          | 4          | CUSTOMER, ORDERS, LINEITEM                     | Business Strategist | Core         | Introduces time-bucketing with category overlay; chart-ready for line/stacked display       |
-| ex69 | Identify Top 10 Revenue-Generating Products | “Which parts generate the most net revenue, and what share of total revenue do they represent?”      | `JOIN`, `GROUP BY`, `SUM()`, window `OVER ()` (B3) | 4          | PART, LINEITEM                                 | Business Strategist | Core         | Teaches percent-of-total calculations with flat output; supports product concentration analysis |
-| ex70 | Top 3 Products per Nation — Wide Format     | “What are the top 3 revenue-generating part keys per nation, in a column-based report?”              | `ROW_NUMBER()`, `PARTITION BY`, `CASE`, pivoting (B3, B9) | 5      | CUSTOMER, ORDERS, LINEITEM, PART, NATION       | Business Strategist | Core         | Converts long-form ranking to wide-format output for presentation use                        |
-| ex71 | Monthly Revenue Share of Top Product        | “For each month since 1997, what % of total revenue came from the single top-selling part?”          | `CTE`, `RANK()`, `% of total`, time join logic (B6, B8) | 6     | ORDERS, LINEITEM, PART                         | Business Strategist | Core         | Combines temporal grouping with rank-based share analysis; ready for line or bar charting    |
+| #    | Title                                               | Type | Difficulty | SQL Concept                             | Dataset Focus                |
+|------|-----------------------------------------------------|------|------------|------------------------------------------|------------------------------|
+| 67   | Yearly Order Coverage and Summary Stats             | Core | 3 / 10     | GROUP BY, aggregates, JOIN               | ORDERS + LINEITEM            |
+| 68   | Monthly Revenue Trend by Segment (Since 1997)       | Core | 4 / 10     | DATE_TRUNC, GROUP BY, segment joins      | ORDERS + LINEITEM + CUSTOMER |
+| 69   | Identify Top 10 Revenue-Generating Products         | Core | 4 / 10     | GROUP BY, windowed SUM OVER ()           | LINEITEM + PART              |
+| 70   | Top 3 Products per Nation — Ranked Long Format      | Core | 5 / 10     | ROW_NUMBER, PARTITION BY, JOINs          | CUSTOMER + ORDERS + PART + NATION |
+| 71   | Pivoted Part Rankings per Nation — Executive View   | Core | 6 / 10     | CASE WHEN, MAX(), pivot reshaping        | CUSTOMER + ORDERS + PART + NATION |
+| 72   | Monthly Revenue Share of Top-Selling Product        | Core | 6 / 10     | RANK, QUALIFY, % of total                | ORDERS + LINEITEM + PART     |
+| 73   | Year-over-Year Revenue Growth by Segment            | Core | 7 / 10     | LAG, partitioned time trends             | CUSTOMER + ORDERS + LINEITEM |
 
----
+#### Level 2: Intermediate → Advanced: Margin Matters (ex74–ex81)
 
-#### Intermediate → Advanced
-
-| Ex # | Title                                           | Business Question                                                                              | SQL Concept Ladder (B3–B9)                           | Difficulty | Dataset Familiarity Focus                  | Track               | Core/Stretch | Notes                                                                                           |
-| :--: | ----------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------- | :--------: | ------------------------------------------ | ------------------- | :----------: | ----------------------------------------------------------------------------------------------- |
-| ex72 | Revenue Share by Region (1997)                  | “What portion of total 1997 revenue came from each region?”                                    | Multi-join, window % share logic (B8)                |      6     | REGION, NATION, CUSTOMER, ORDERS, LINEITEM | Business Strategist |     Core     | Use Snowflake for stacked bar visual; encourages contribution-style metric storytelling.        |
-| ex73 | Segment Q4 Seasonality Check                    | “Which customer segments saw a revenue spike in Q4 compared to the rest of 1997?”              | Q4 filter vs annual avg, `LAG` + delta (B6)          |      6     | CUSTOMER, ORDERS, LINEITEM                 | Business Strategist |     Core     | Seasonality detection; table easily charts as grouped bars or deltas.                           |
-| ex74 | Repeat Buyer Ratio Within 30 Days (1997 only)   | “What % of BUILDING customers reordered within 30 days?”                                       | `MIN`, `DATEDIFF`, CTE logic (B7)                    |      6     | CUSTOMER, ORDERS                           | Business Strategist |     Core     | Introduces funnel-style metric scoped to a real scenario.                                       |
-| ex75 | Region-Part Revenue Heatmap (Top 20 Parts only) | “How is revenue from the top 20 parts distributed across regions?”                             | Multi-rank, window share, `CASE` matrix (B3, B8, B9) |      7     | REGION, NATION, SUPPLIER, PART, LINEITEM   | Business Strategist |     Core     | Encourages pivoted output; part × region for heatmap. Preps mindset for cross-cutting analysis. |
-| ex76 | Dashboard Table: Segment-Region-Month Trends    | “Prepare a flat dataset of revenue per segment × region × month for 1997 to feed a dashboard.” | CTE + multi-group + `CASE`, date-pivot prep (B9)     |      7     | CUSTOMER, NATION, REGION, ORDERS, LINEITEM | Business Strategist |     Core     | Full visual-ready table; validates user’s ability to flatten, format, and visualize insights.   |
+| #    | Title                                               | Type | Difficulty | SQL Concept                             | Dataset Focus                  |
+|------|-----------------------------------------------------|------|------------|------------------------------------------|--------------------------------|
+| 74   | Product Margin Diagnostics — Flagging Loss Leaders  | Core | 5 / 10     | CASE, derived margin logic               | LINEITEM + PARTSUPP + PART     |
+| 75   | Supplier Margin Distribution                        | Core | 5 / 10     | JOIN, GROUP BY, margin spread            | SUPPLIER + PARTSUPP + PART     |
+| 76   | Regional Margin Patterns                            | Core | 6 / 10     | JOINs, GROUP BY, margin by region        | REGION + NATION + SUPPLIER + PARTSUPP + PART |
+| 77   | Strategic Product Positioning — Volume vs Margin    | Core | 8 / 10     | bucketing, quadrant mapping              | PARTSUPP + LINEITEM            |
+| 78   | Long Format Output for Heatmap                      | Core | 8 / 10     | CASE WHEN, GROUP BY, unpivoted structure | PARTSUPP + LINEITEM            |
+| 79   | Strategic Mapping of Revenue vs Margin — Heat Table | Core | 8 / 10     | PIVOT, margin vs revenue quadrant        | PARTSUPP + LINEITEM            |
+| 80   | Correlation Between Volume and Margin               | Core | 9 / 10     | CORR, exploratory analysis               | PARTSUPP + LINEITEM            |
+| 81   | Significance Testing for Correlation Coefficient    | Core | 9 / 10     | correlation testing, t-stat formula      | PARTSUPP + LINEITEM            |
