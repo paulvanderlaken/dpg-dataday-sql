@@ -1,32 +1,34 @@
-## ex49: Is Group-Level Discount Estimation Worth It?
+## ex49: Flagging Large or Valuable Shipments
 
 > **Type:** Core | **Track:** Query Optimizer  
 >
-> **Difficulty:** 4 / 10
+> **Difficulty:** 3 / 10
 
 ### Business context
-Your Snowflake cost dashboard flagged a revenue summary query as “potentially inefficient.” It calculates the **total value lost to discounts** by summing up the per-row discount value across all line items — grouped by **shipping year**.
+The logistics team wants to monitor line items that either involve **large shipment quantities** or are **individually high in value**. These line items are often reviewed for special handling, fraud detection, or pricing policy compliance. A previous analyst wrote query below. 
 
-An engineer has proposed a refactor: instead of calculating discount per row, we could compute the **gross revenue and average discount per year**, and then multiply those values at the group level.
-
-You're asked to:
-1. Rewrite the query using this suggestion,
-2. Compare performance and accuracy,
-3. Decide whether this tradeoff makes sense — and when it might.
-
-**Business logic & definitions:**
-* Total discount per year = `SUM(L_EXTENDEDPRICE * L_DISCOUNT)` for all shipped items
-* Refactor strategy: `SUM(L_EXTENDEDPRICE) * AVG(L_DISCOUNT)`
+Do you see an opportunity to rewrite it more efficiently? Use `EXPLAIN` to evaluate and compare the two queries.
 
 ### Query to optimise
 
 ```sql
--- Original: computes row-level discount then aggregates by year
 SELECT
-  YEAR(L.L_SHIPDATE) AS SHIP_YEAR,
-  SUM(L.L_EXTENDEDPRICE * L.L_DISCOUNT) AS TOTAL_DISCOUNT
-FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM L
-GROUP BY SHIP_YEAR;
+    L_ORDERKEY,
+    L_PARTKEY,
+    L_QUANTITY,
+    L_EXTENDEDPRICE
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM
+WHERE L_QUANTITY > 30
+
+UNION ALL
+
+SELECT
+    L_ORDERKEY,
+    L_PARTKEY,
+    L_QUANTITY,
+    L_EXTENDEDPRICE
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM
+WHERE L_EXTENDEDPRICE > 10000;
 ```
 
 ### Required datasets
@@ -38,22 +40,18 @@ GROUP BY SHIP_YEAR;
 
 #### How to think about it
 
-Try separating the components of the formula:
-- `L_EXTENDEDPRICE`: total gross value
-- `L_DISCOUNT`: average discount per group
+The current query performs **two full scans** of the `LINEITEM` table and appends the results — even if the same partitions are read twice. Ask yourself:
 
-You can calculate both **per year**, then apply the formula once per group — avoiding the row-level math.
-
-But don’t assume faster means better — test both performance and output.
+- Can a single `WHERE` clause do the job?
+- Are overlapping rows acceptable or expected?
+- Is performance improved by merging into one pass?
 
 #### Helpful SQL concepts
 
-`GROUP BY`, `YEAR()`, `SUM`, `AVG`, performance reasoning
+`WHERE`, `OR`, column projection
 
 ```sql
-SELECT SUM(value) * AVG(rate)
-FROM table
-GROUP BY date_key;
+SELECT … FROM … WHERE condition1 OR condition2;
 ```
 
 </details>
@@ -61,47 +59,46 @@ GROUP BY date_key;
 <details>
 <summary>✅ Solution (click to expand)</summary>
 
-#### Refactored query
+#### Working query
 
 ```sql
 SELECT
-  YEAR(L.L_SHIPDATE) AS SHIP_YEAR,
-  SUM(L.L_EXTENDEDPRICE) AS GROSS_REVENUE,
-  AVG(L.L_DISCOUNT) AS AVG_DISCOUNT,
-  SUM(L.L_EXTENDEDPRICE) * AVG(L.L_DISCOUNT) AS ESTIMATED_DISCOUNT
-FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM L
-GROUP BY SHIP_YEAR;
+    L_ORDERKEY,
+    L_PARTKEY,
+    L_QUANTITY,
+    L_EXTENDEDPRICE
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM
+WHERE L_QUANTITY > 30
+   OR L_EXTENDEDPRICE > 10000;
 ```
 
-#### Performance and result comparison
+#### Why this works
 
-In practice:
-* You may observe **slightly faster runtime** for the refactored query (e.g., 1.2–1.4×), especially on cold cache.
-* Both queries scan the same rows and partitions — but the second version avoids per-row multiplication.
-* Results will differ: the original gives **exact discount totals**, while the refactor gives **an estimate** using group-level aggregates.
-* `SUM(gross) * AVG(discount)` can **over- or underestimate** total discounts applies the **same average discount to all revenue**
+This rewrite performs a **single scan** of the `LINEITEM` table and evaluates the compound condition using `OR`. For large tables, that can dramatically reduce total I/O compared to scanning the same table twice. If the two filter conditions are not highly selective or touch similar partitions, this version is often faster and cheaper.
+
+However, for **very selective, non-overlapping filters**, the `UNION ALL` version might allow better **parallelism and partition skipping** — so always compare using Snowflake’s query profiler.
 
 #### Business answer
 
-This refactor provides **only minor compute savings** and the result is **no longer mathematically exact**.
-
-For production financial reporting, you'd certainly prefer the precise version.
+The result lists all line items that either shipped in large quantities or had a high individual extended price — i.e., candidates for review due to volume or value.
 
 #### Take-aways
 
-* Don't default to refactoring unless it has **meaningful impact** — in this case, the change is minor.
-* Use **group-level estimation** for speed when:
-  - Precision is not affected (e.g. simple arithmatics)
-  - Precision isn’t critical (e.g. high-level KPIs)
-  - Or you’re working with very large datasets.
-* Be aware that small query shape differences can affect **result accuracy** — not just cost.
+* Rewriting multi-pass logic (`UNION ALL`) into a **single filtered scan** often improves performance — but not always.
+* Query optimization depends on **filter selectivity**, **partition layout**, and **data skew**.
+* Learn to test changes using `EXPLAIN` or `QUERY_HISTORY`, not just intuition.
+* NOTE: Clean, single-pass logic also improves **maintainability** and **readability** for others.
 
 </details>
 
 <details>
 <summary>🎁 Bonus Exercise (click to expand)</summary>
 
-Repeat both queries, but only for line items with `L_QUANTITY > 50`.  
-Does narrowing the dataset change the performance difference between the approaches?
+Add a `CASE` column called `alert_reason` with three labels:
+- `'bulk'` if only `L_QUANTITY > 30`
+- `'high_value'` if only `L_EXTENDEDPRICE > 10000`
+- `'both'` if both conditions are true
+
+Then filter for only those flagged `'both'`.
 
 </details>
