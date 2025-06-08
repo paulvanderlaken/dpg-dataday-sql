@@ -51,15 +51,18 @@ Designed to **help you write better-performing SQL**, this track introduces cost
 </details>
 
 <details>
-<summary>📊 <b>Business Strategist</b> – Derive Insight & Build Data Stories</summary>
+<summary>📊 <b>Business Strategist</b> – Prepare Data for Strategic Insights</summary>
 
-This track focuses on **answering commercial and strategic questions** through SQL storytelling. Explore trends, segment behavior, and build actionable metrics.
+This track challenges you to **transform and organize data** for analysis and storytelling. 
+Build reusable queries that support trend detection, ranking, comparisons, and dashboard-ready summaries.
 
 **Key skills**:  
-- Time series analysis (`DATE_TRUNC`, rolling averages)  
-- Cohort definitions and KPI derivation  
-- Ranking, contribution logic, and segmentation  
-- Funnel metrics and retention patterns  
+* Time bucketing, smoothing, and percent change
+* Pivoting and CASE logic for matrix outputs
+* Multi-metric cohort and group comparisons
+* Rolling window aggregations
+* Building datasets optimized for charts and storytelling
+
 </details>
 
 ![alt text](img/three-tracks-explainer.png)
