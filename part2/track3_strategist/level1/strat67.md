@@ -1,30 +1,34 @@
-## ex67: Total Revenue per Entity
+## ex67: Yearly Order Coverage and Summary Stats
 
 > **Type:** Core | **Track:** Business Strategist  
 >
 > **Difficulty:** 3 / 10
 
 ### Business context
-Leadership wants to better understand which entities (customers, suppliers, or other key actors) are most valuable in terms of total transaction volume. This initial view will focus on **total revenue per customer**, giving us a ranked list to guide further analysis or dashboarding.
-
-This output can directly feed into dashboards, strategic prioritization decks, or support entity-level KPI development.
+You’ve just been asked to support a strategic revenue deep dive for the finance team. 
+Before doing any calculations, you want to grasp which **years have complete order data** — and how the business performed in those years. 
+Hence, your task is three-fold:
+1. **Group the orders by year** and show the **date range** of activity per year.
+2. Include key **summary statistics** per year: total gross revenue, total discounts, and taxes.
+3. Visualize gross and net revenue in a line chart using Snowflake's built-in functionality.
 
 **Business logic & definitions:**
-* Net revenue: `L_EXTENDEDPRICE * (1 - L_DISCOUNT)`
-* Customer revenue: Sum of net revenue across all line items linked to their orders
+* order year = `YEAR(O_ORDERDATE)`
+* net revenue = `L_EXTENDEDPRICE * (1 - L_DISCOUNT)`
+* total discount = `L_EXTENDEDPRICE * L_DISCOUNT`
+* total tax = `L_EXTENDEDPRICE * L_TAX`
+* order = defined in `ORDERS`; revenue from matching rows in `LINEITEM`
 
 ### Starter query
 ```sql
--- Preview of relevant fields for linking customer, order, and line item
+-- Preview the orders and line items to understand date and pricing structure
 SELECT
-    C_CUSTKEY,
-    C_NAME,
     O_ORDERKEY,
+    O_ORDERDATE,
     L_EXTENDEDPRICE,
-    L_DISCOUNT
-FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER C
-JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O
-  ON C.C_CUSTKEY = O.O_CUSTKEY
+    L_DISCOUNT,
+    L_TAX
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O
 JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
   ON O.O_ORDERKEY = L.L_ORDERKEY
 LIMIT 10;
@@ -32,7 +36,6 @@ LIMIT 10;
 
 ### Required datasets
 
-* `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER`
 * `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS`
 * `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM`
 
@@ -41,22 +44,22 @@ LIMIT 10;
 
 #### How to think about it
 
-This is a classic 3-table join problem. You need to:
-- Join `CUSTOMER` to `ORDERS`, and `ORDERS` to `LINEITEM`
-- Derive revenue at the line item level
-- Aggregate revenue per customer using `GROUP BY`
-
-To rank or sort them by revenue, use `ORDER BY`.
+Start by joining orders and line items to get both the order date and pricing information. Use `YEAR()` to group by order year. Then compute:
+- the **min and max** order date (per year),
+- the **total extended price** (gross revenue),
+- the **total discount** and **total tax** using calculated expressions.
 
 #### Helpful SQL concepts
 
-`JOIN`, `GROUP BY`, `SUM`, arithmetic expressions, `ORDER BY`
+`YEAR()`, `GROUP BY`, `MIN()`, `MAX()`, arithmetic expressions
 
 ```sql
-SELECT column, SUM(expr) 
-FROM … 
-GROUP BY column 
-ORDER BY SUM(expr) DESC;
+SELECT
+  YEAR(order_date),
+  SUM(price),
+  SUM(price * discount)
+FROM …
+GROUP BY YEAR(order_date);
 ```
 
 </details>
@@ -68,39 +71,46 @@ ORDER BY SUM(expr) DESC;
 
 ```sql
 SELECT
-    C.C_NAME,
-    C.C_CUSTKEY,
-    SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) AS TOTAL_REVENUE
-FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER C
-JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O
-  ON C.C_CUSTKEY = O.O_CUSTKEY
+    YEAR(O.O_ORDERDATE) AS order_year,
+    MIN(O.O_ORDERDATE) AS first_order_date,
+    MAX(O.O_ORDERDATE) AS last_order_date,
+    COUNT(DISTINCT O.O_ORDERKEY) AS num_orders,
+    SUM(L.L_EXTENDEDPRICE) AS gross_revenue,
+    SUM(L.L_EXTENDEDPRICE * L.L_DISCOUNT) AS total_discount,
+    SUM(L.L_EXTENDEDPRICE * L.L_TAX) AS total_tax,
+    SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) AS net_revenue
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O
 JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
   ON O.O_ORDERKEY = L.L_ORDERKEY
-GROUP BY
-    C.C_NAME, C.C_CUSTKEY
-ORDER BY TOTAL_REVENUE DESC;
+GROUP BY YEAR(O.O_ORDERDATE)
+ORDER BY order_year;
 ```
 
 #### Why this works
 
-We first join the three tables using their natural keys, then compute revenue per line item, and finally group by customer. By ordering the result, we can immediately see which customers contributed the most to total revenue.
+This query joins orders with their line items to access both order date and pricing components. It groups the data by year and then aggregates key metrics: the time coverage and the financial performance.
+
+Your Snowflake chart could look as follows:
+![alt text](../../../img/solutions/ex67_line-chart.png)
 
 #### Business answer
 
-The result identifies which customers generated the highest total revenue, serving as a starting point for prioritization or performance tracking.
+The year **1997** is the most recent full year of data, with complete coverage from January to December. It also has the highest gross and net revenue — making it the best candidate for deeper revenue analysis.
 
 #### Take-aways
 
-* The TPCH schema links customers to orders and line items using `C_CUSTKEY → O_CUSTKEY → L_ORDERKEY`.
-* `L_EXTENDEDPRICE * (1 - L_DISCOUNT)` is the standard revenue definition in TPCH.
-* Sorting your output makes it immediately insight-ready for dashboards and rankings.
+* Combine `MIN()`/`MAX()` with `YEAR()` to validate dataset completeness.
+* Use simple expressions to break down pricing components like tax and discount.
+* A well-structured `GROUP BY` can deliver both time audit and financial summary.
+* Don't overlook basic temporal checks before diving into KPIs or trends.
 
 </details>
 
 <details>
 <summary>🎁 Bonus Exercise (click to expand)</summary>
 
-Can you add a column showing how much of the total revenue is driven by a single customer?
-Can you add a second column showing the percentile each record is at, when it comes to total revenue?
+Add **average net revenue per order** to your query. Use `SUM(net_revenue) / COUNT(DISTINCT O_ORDERKEY)` or a CTE to cleanly separate steps.
+
+Can you make a barchart in Snowflake, showing how the revenue per order changed over the years?
 
 </details>

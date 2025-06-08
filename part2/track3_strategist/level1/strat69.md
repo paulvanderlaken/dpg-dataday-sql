@@ -1,66 +1,56 @@
-## ex69: Average Value per Transaction Entity (1997 Only)
+## ex69: Identify Top 10 Revenue-Generating Products
 
 > **Type:** Core | **Track:** Business Strategist  
 >
-> **Difficulty:** 3 / 10
+> **Difficulty:** 4 / 10
 
 ### Business context
-Your team wants to evaluate **average order value per customer**, but only for orders placed during the year **1997**. This scoped analysis will help compare performance during a single calendar year and support benchmarking or targeted reviews.
+To better understand where our revenue comes from, product managers want to know **which items generate the most net revenue**. A few high-performing parts might drive a large share of total business — uncovering these will help focus future marketing, inventory, and supply efforts.
+
+Your task is to produce a ranked list of the **top 10 parts by total net revenue**. In addition to showing the raw revenue values, you should also compute **what share of total revenue** each part contributes — helping the business assess product concentration risk.
 
 **Business logic & definitions:**
-* Net revenue: `L_EXTENDEDPRICE * (1 - L_DISCOUNT)`
-* Order revenue: sum of net revenue across line items per order
-* Average order value (AOV): total revenue / number of orders
-* Time scope: only include `O_ORDERDATE` in 1997
+* net revenue = `L_EXTENDEDPRICE * (1 - L_DISCOUNT)`
+* part name = `P_NAME` (from `PART`)
+* revenue share = part revenue ÷ total revenue (of whole portfolio!)
 
 ### Starter query
 ```sql
--- Preview of 1997 orders and related customer and line item fields
+-- Preview part names and prices for joined order lines
 SELECT
-    C.C_NAME,
-    O.O_ORDERKEY,
-    O.O_ORDERDATE,
+    L.L_PARTKEY,
+    P.P_NAME,
     L.L_EXTENDEDPRICE,
     L.L_DISCOUNT
-FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER C
-JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O
-  ON C.C_CUSTKEY = O.O_CUSTKEY
-JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
-  ON O.O_ORDERKEY = L.L_ORDERKEY
-WHERE O.O_ORDERDATE BETWEEN '1997-01-01' AND '1997-12-31'
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
+JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART P
+  ON L.L_PARTKEY = P.P_PARTKEY
 LIMIT 10;
 ```
 
 ### Required datasets
 
-* `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER`
-* `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS`
 * `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM`
+* `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART`
 
 <details>
 <summary>💡 Hint (click to expand)</summary>
 
 #### How to think about it
 
-Use a **CTE** to:
-1. Filter to orders in 1997
-2. Aggregate net revenue at the **order level**
-3. Then group by customer to compute AOV
-
-Use `BETWEEN '1997-01-01' AND '1997-12-31'` to constrain the timeframe.
+Start by calculating total net revenue per part. Then compute **total revenue across all parts** using a window function with no partition. Use this to calculate the proportion for each part.
 
 #### Helpful SQL concepts
 
-`CTE`, `JOIN`, `WHERE`, `GROUP BY`, `AVG`, `ROUND`
+`JOIN`, `GROUP BY`, `SUM()`, window `SUM() OVER ()`
 
 ```sql
-WITH subquery AS (
-  SELECT …
-  WHERE O_ORDERDATE BETWEEN …
-)
-SELECT …
-FROM subquery
-GROUP BY …;
+SELECT
+  category,
+  SUM(metric) AS total,
+  SUM(metric) / SUM(SUM(metric)) OVER () AS pct_of_total
+FROM …
+GROUP BY category;
 ```
 
 </details>
@@ -71,51 +61,69 @@ GROUP BY …;
 #### Working query
 
 ```sql
-WITH order_revenue_1997 AS (
-    SELECT
-        O.O_ORDERKEY,
-        O.O_CUSTKEY,
-        SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) AS ORDER_REVENUE
-    FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS O
-    JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
-      ON O.O_ORDERKEY = L.L_ORDERKEY
-    WHERE O.O_ORDERDATE BETWEEN '1997-01-01' AND '1997-12-31'
-    GROUP BY O.O_ORDERKEY, O.O_CUSTKEY
+SELECT
+    P.P_NAME AS part_name,
+    SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) AS net_revenue,
+    SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) / 
+      SUM(SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT))) OVER () AS pct_of_total_revenue
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
+JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART P
+  ON L.L_PARTKEY = P.P_PARTKEY
+GROUP BY P.P_NAME
+ORDER BY net_revenue DESC
+LIMIT 10;
+```
+
+<details>
+<summary>Alternative query using CTE</summary>
+
+A CTE is often considered more readable and modular, however, in this case, it would be slightly less performant.
+
+```sql
+WITH part_revenue AS (
+  SELECT
+    P.P_NAME AS part_name,
+    SUM(L.L_EXTENDEDPRICE * (1 - L.L_DISCOUNT)) AS net_revenue
+  FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM L
+  JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART P
+    ON L.L_PARTKEY = P.P_PARTKEY
+  GROUP BY P.P_NAME
+),
+total_revenue AS (
+  SELECT SUM(net_revenue) AS total FROM part_revenue
 )
 SELECT
-    C.C_NAME,
-    C.C_CUSTKEY,
-    COUNT(ORV.O_ORDERKEY) AS NUM_ORDERS_1997,
-    SUM(ORV.ORDER_REVENUE) AS TOTAL_REVENUE_1997,
-    ROUND(AVG(ORV.ORDER_REVENUE), 2) AS AVG_ORDER_VALUE_1997
-FROM order_revenue_1997 ORV
-JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER C
-  ON ORV.O_CUSTKEY = C.C_CUSTKEY
-GROUP BY C.C_NAME, C.C_CUSTKEY
-ORDER BY AVG_ORDER_VALUE_1997 DESC;
+  pr.part_name,
+  pr.net_revenue,
+  pr.net_revenue / tr.total AS pct_of_total_revenue
+FROM part_revenue pr
+CROSS JOIN total_revenue tr
+ORDER BY pr.net_revenue DESC
+LIMIT 10;
 ```
+</details>
+
 
 #### Why this works
 
-The inner CTE computes revenue per order within 1997. The outer query aggregates this per customer, giving a clean and scoped AOV view.
+This query first calculates net revenue per part, then uses a **window function without partitioning** to compute the total net revenue across all parts. Each row’s contribution is expressed as a percentage of that total — allowing clear visibility into product concentration.
 
 #### Business answer
 
-This result shows which customers placed the highest-value orders during 1997 — a useful lens for reviewing historical client performance.
+The top 10 parts do not account for significant portions of the total revenue, with limited differentiation in the top 10. 
 
 #### Take-aways
 
-* Adding a date filter in the CTE is a clean way to scope an analysis.
-* Two-step aggregation is a key pattern for entity-level summaries.
-* AOV is a powerful normalized metric to compare across customers.
+* Window functions can compute totals across the whole dataset for % calculations.
+* Revenue share helps contextualize raw dollar values in business decision-making.
+* `OVER ()` is a powerful SQL feature for dataset-wide metrics without subqueries.
+* Top-N queries can and should go beyond just listing — they can explain contribution.
 
 </details>
 
 <details>
 <summary>🎁 Bonus Exercise (click to expand)</summary>
 
-Can you return **only customers who placed more than 3 orders in 1997**?
-
-Hint: Use `HAVING COUNT(…) > 3` at the customer aggregation level.
+Calculate the **cumulative revenue share** (running total of `pct_of_total_revenue`) ordered by descending revenue. What % of total revenue is covered by the top 3 products? The top 5?
 
 </details>
