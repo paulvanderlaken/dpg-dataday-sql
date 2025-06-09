@@ -119,7 +119,9 @@ Consult the `matrix.md` file for the full table of exercises and metadata.
 1. Navigate to any `.md` file and read the problem description.
 2. Open the Snowflake Web UI.
 3. Paste the starter query, apply your reasoning, and experiment.
-4. Try the bonus task if you want to go beyond!
+4. If you get stuck, try the `hint` to work your way through.
+5. Use the solution to check your code and answers.  
+6. Try the bonus task if you want to go beyond!
 
 ---
 
@@ -144,13 +146,9 @@ This workshop is **non-linear and learner-led**. You are in control.
 
 ---
 
-Excellent direction — here's the updated `## 🧵 Case-Driven Learning Paths` section, now organized by track and tiered by level. This format mirrors your workshop structure and enhances clarity for learners navigating the repo.
-
----
-
 ## 🧵 Case-Driven Learning Paths
 
-This workshop includes four distinct tracks, each with **progressive narrative cases** designed to simulate real-world analytics and engineering workflows. Each arc builds from a realistic business scenario and layers complexity through multiple exercises.
+This workshop includes three distinct tracks, each with **progressive narrative cases** designed to simulate real-world analytics and engineering workflows. Each arc builds from a realistic business scenario and layers complexity through multiple exercises.
 
 ### 🕵️ SQL Detective Track
 
@@ -175,7 +173,6 @@ You’ll work through progressively harder analytical joins, anti-joins, group c
 Each assignment gives you an inefficient query that technically “works” — but performs poorly. You’ll diagnose bottlenecks and rewrite smarter versions using best practices.
 
 ⚙️ Output: Clean, performant queries — and performance reflection on row scan savings
-
 
 ---
 
@@ -204,9 +201,6 @@ You’ll trace margin performance across parts and suppliers, visualize strategi
 
 ---
 
-Each track’s case arc is optional — but highly recommended for learners who want to **think like problem-solvers, engineers, or analysts**, not just query writers.
-
----
 
 ## 🤝 Need Help?
 
