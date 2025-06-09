@@ -83,7 +83,7 @@ You don't need to store names or balances — only the key and flag reference.
 <details>
 <summary>✅ Solution (click to expand)</summary>
 
-#### Step 1: Clean up previous flag version
+#### Step 1: Clean up previous flag version (if you made one already)
 
 ```sql
 DELETE FROM WORKSHOP_DB.TEMP_SCHEMA.status_dim WHERE status_id = 2;
@@ -106,10 +106,11 @@ INSERT INTO WORKSHOP_DB.TEMP_SCHEMA.status_dim (
 #### Step 3: Append negative-balance customers to audit flags
 
 ```sql
-INSERT INTO WORKSHOP_DB.TEMP_SCHEMA.customer_audit_flags (C_CUSTKEY, STATUS_ID)
+INSERT INTO WORKSHOP_DB.TEMP_SCHEMA.customer_audit_flags (C_CUSTKEY, STATUS_ID, FLAGGED_AT)
 SELECT
     C_CUSTKEY,
-    2 AS status_id
+    2 AS status_id,
+    CURRENT_TIMESTAMP()
 FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER
 WHERE C_ACCTBAL < 0;
 ```

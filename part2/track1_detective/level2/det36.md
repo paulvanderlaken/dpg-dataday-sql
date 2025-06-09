@@ -15,6 +15,8 @@ This result will be shown to internal stakeholders — but must be **stored effi
 
 Rather than writing full names and descriptions into a wide table, your task is to build a **lean audit model** using **separate dimension and fact tables**.
 
+Do not forget to add a timestamp to each record to indicate when they were flagged in the audit. 
+
 **Business logic & definitions:**
 * Inactive customer: present in `CUSTOMER` but with **no orders** in `ORDERS`
 * Status ID: `'1'`
@@ -81,7 +83,7 @@ This reflects efficient, real-world data modeling principles.
 
 ```sql
 -- Your fact table should store:
-C_CUSTKEY | STATUS_ID
+C_CUSTKEY | STATUS_ID | FLAGGED_AT
 
 -- Then join to get:
 C_NAME | STATUS_FLAG | STATUS_DESCRIPTION
@@ -112,10 +114,22 @@ VALUES (1, 'inactive', 'no order record found as of audit');
 #### Step 3: Create the audit flag table
 
 ```sql
-CREATE OR REPLACE TABLE WORKSHOP_DB.TEMP_SCHEMA.customer_audit_flags AS
+-- Step 4: Define the fact table schema explicitly with a timestamp
+CREATE OR REPLACE TABLE WORKSHOP_DB.TEMP_SCHEMA.customer_audit_flags (
+    C_CUSTKEY INTEGER,
+    STATUS_ID INTEGER,
+    FLAGGED_AT TIMESTAMP
+  );
+```
+
+#### Step 4: Fill the audit flag table
+
+```sql
+INSERT INTO WORKSHOP_DB.TEMP_SCHEMA.customer_audit_flags (C_CUSTKEY, STATUS_ID, FLAGGED_AT)
 SELECT
     c.C_CUSTKEY,
-    1 AS status_id
+    1 AS status_id,
+    CURRENT_TIMESTAMP
 FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER c
 LEFT JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS o
   ON c.C_CUSTKEY = o.O_CUSTKEY
@@ -130,6 +144,7 @@ SELECT
     c.C_NAME,
     s.status_flag,
     s.status_description
+    f.FLAGGED_AT
 FROM WORKSHOP_DB.TEMP_SCHEMA.customer_audit_flags f
 JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER c
   ON f.C_CUSTKEY = c.C_CUSTKEY
@@ -139,7 +154,7 @@ JOIN WORKSHOP_DB.TEMP_SCHEMA.status_dim s
 
 #### Why this works
 
-This structure avoids repetitive storage of text-heavy audit labels and customer names. Instead, you’re storing **keys only** in the fact table and joining to reference dimensions when needed. This aligns with best practices in data warehousing and audit pipeline design.
+This structure avoids repetitive storage of text-heavy audit labels and customer names. Instead, you’re storing **keys only** in the fact table and joining to reference dimensions when needed. This aligns with best practices in data warehousing and audit pipeline design. The timestamp allows for full traceability.
 
 #### Business answer
 
@@ -147,10 +162,10 @@ Inactive customers have been flagged efficiently, using status IDs and a separat
 
 #### Take-aways
 
+* Always explicitly define schemas for shared tables — don’t rely on inferred structure
 * Storing only keys makes audit tables efficient and maintainable
 * Descriptions and names should be joined in only when needed
 * This pattern mirrors star-schema thinking used in scalable pipelines
-* Even small audits benefit from clean modeling habits
 
 </details>
 

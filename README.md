@@ -146,20 +146,33 @@ This workshop is **non-linear and learner-led**. You are in control.
 
 ---
 
-## 🧵 Case-Driven Learning Paths
+### 🧵 Case-Driven Learning Paths
 
-This workshop includes three distinct tracks, each with **progressive narrative cases** designed to simulate real-world analytics and engineering workflows. Each arc builds from a realistic business scenario and layers complexity through multiple exercises.
+This workshop includes three distinct tracks, each with **two progressive narrative cases** designed to simulate real-world analytics and engineering workflows. Each arc builds from a realistic business scenario and layers complexity through multiple exercises.
 
 ### 🕵️ SQL Detective Track
 
-#### **Level 1+2: Sourcing Clues from the Data** (ex60–ex64)
+#### **Level 1: Sourcing Clues from the Data**
 
 > **A sales anomaly has surfaced.**
 > As a data detective, you’re tasked with investigating inconsistencies in ordering behavior, supplier patterns, and missing links between countries.
 
-You’ll work through progressively harder analytical joins, anti-joins, group checks, and matching logic — all framed as a business investigation.
+This case focuses on **data exploration, flagging anomalies, and targeted filtering** using joins, anti-joins, and pattern detection.
+You’ll learn to create reliable audit flags, build dimensionally modeled audit tables, and prepare data for deeper investigation.
 
-🔍 Output: Mismatch tables, filtered diagnostics, investigative joins
+🔍 Output: Diagnostic tables with flagged issues, light audit flags, and investigative joins
+
+---
+
+#### **Level 2: Building a Forensic Audit Pipeline**
+
+> **The audit has escalated.**
+> Now equipped with forensic-level access, you’ll simulate a full audit pipeline, enriching flagged records, appending new anomaly categories, and preserving historical traceability.
+
+This case emphasizes **efficient data storage, modular audit flagging with timestamps, and using Snowflake’s Time Travel** to validate and trace data changes.
+You’ll conclude by synthesizing audit data with customer and geography metadata for stakeholder reporting.
+
+🔍 Output: Modular audit flags with timestamping, VIP overrides, time-travel validation queries, and comprehensive staging views ready for business use
 
 ---
 
