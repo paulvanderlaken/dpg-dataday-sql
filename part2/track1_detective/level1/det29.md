@@ -1,18 +1,19 @@
-## ex29: Suspicious High-Discount, High-Quantity Items
+## ex29: Flag High-Discount, High-Quantity Line Items
 
 > **Type:** Core | **Track:** SQL Detective  
 >
 > **Difficulty:** 4 / 10
 
 ### Business context
-The pricing and audit team wants to flag outlier transactions where **a large number of units were sold at a steep discount**. These could reflect exceptional bulk deals — or accidental overrides of standard pricing rules.
+Your earlier checks flagged naming issues and sales gaps. Now, the pricing audit team has asked you to investigate **transaction-level anomalies** — specifically, items that were sold in **very large quantities** and received **steep discounts**.
 
-You're asked to identify any line items where both **quantity and discount** are unusually high, so they can be reviewed for policy compliance.
+These may indicate bulk deals, but they could also reflect policy overrides or data entry errors. You’re asked to isolate any line items that satisfy both thresholds and store them for manual review.
 
 **Business logic & definitions:**
-* high quantity: more than **45 units**
-* high discount: more than **8%** (`L_DISCOUNT > 0.08`)
-* both conditions must be true
+* High quantity: more than **45 units**
+* High discount: more than **8%** (`L_DISCOUNT > 0.08`)
+* Both conditions must be met
+* Output: store in `WORKSHOP_DB.TEMP_SCHEMA.flagged_bulk_discount_items`
 
 ### Starter query
 ```sql
@@ -36,20 +37,22 @@ LIMIT 10;
 
 #### How to think about it
 
-Use a `WHERE` clause with an `AND` operator to enforce **both** conditions:
+Use a `WHERE` clause to apply **both conditions** together:
 - `L_QUANTITY > 45`
 - `L_DISCOUNT > 0.08`
 
-This targets extreme cases by selecting records above the 95th percentile for both fields.
+You're looking for **compound logic**, not either-or. So use `AND`.
+
+After confirming the logic, wrap the query in `CREATE TABLE` to store results.
 
 #### Helpful SQL concepts
 
-`WHERE`, compound filters, numeric comparisons
+`WHERE`, `AND`, numeric comparisons, `CREATE TABLE AS`
 
 ```sql
 SELECT …
-FROM …
-WHERE col1 > value1 AND col2 > value2;
+FROM LINEITEM
+WHERE L_QUANTITY > 45 AND L_DISCOUNT > 0.08;
 ```
 
 </details>
@@ -60,39 +63,58 @@ WHERE col1 > value1 AND col2 > value2;
 #### Working query
 
 ```sql
+-- Step 1: Create the flagged transaction table
+CREATE OR REPLACE TABLE WORKSHOP_DB.TEMP_SCHEMA.flagged_bulk_discount_items AS
 SELECT
     L_ORDERKEY,
     L_PARTKEY,
     L_QUANTITY,
     L_DISCOUNT,
-    L_EXTENDEDPRICE
+    L_EXTENDEDPRICE,
+    L_EXTENDEDPRICE * (1 - L_DISCOUNT) AS net_revenue
 FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM
 WHERE L_QUANTITY > 45
-  AND L_DISCOUNT > 0.08
-ORDER BY L_DISCOUNT DESC;
+  AND L_DISCOUNT > 0.08;
+```
+
+```sql
+-- Step 2: Review results
+SELECT * FROM WORKSHOP_DB.TEMP_SCHEMA.flagged_bulk_discount_items
+ORDER BY net_revenue DESC;
 ```
 
 #### Why this works
 
-This filters the `LINEITEM` table for records that exceed both business-defined thresholds. The result surfaces **rare but potentially concerning** combinations of high volume and high discount.
+This query filters the `LINEITEM` table for records that exceed both **volume** and **discount** thresholds. It also computes a derived column `net_revenue` to support prioritization during manual review.
+
+Storing the result enables deeper review by pricing or compliance stakeholders.
 
 #### Business answer
 
-These 34 line items combined **exceptionally large quantities and steep discounts**, which could signal pricing override risks or strategic exceptions.
+You identified a subset of transactions where **high volumes were sold at unusually steep discounts** — potential outliers that may require approval review or fraud checks.
 
 #### Take-aways
 
-* `AND` is essential for rule-based flagging across multiple dimensions
-* Choosing extreme thresholds helps isolate rare, potentially anomalous events
-* Real-world anomaly detection often involves combined logic (e.g., volume + pricing)
+* Compound filters are essential when detecting violations of business rules
+* Derived columns like `net_revenue` help downstream prioritization
+* Storing transactional outliers is a common step in fraud and pricing pipelines
+* This builds toward a rules-based anomaly detection layer
 
 </details>
 
 <details>
 <summary>🎁 Bonus Exercise (click to expand)</summary>
 
-Add a derived column that computes the **net revenue** for each flagged item:  
-`L_EXTENDEDPRICE * (1 - L_DISCOUNT)`  
-Which items produced the highest net revenue despite the heavy discount?
+Enhance your audit by adding a **severity score** to each flagged transaction, using the formula:
+
+```sql
+severity_score = L_QUANTITY * L_DISCOUNT
+```
+
+1. Add this as a new column to the table
+2. Then create a second table with just the **top 10 most severe records**, based on this score:
+   `WORKSHOP_DB.TEMP_SCHEMA.top_discount_anomalies`
+
+This score gives stakeholders a quick way to prioritize their manual review efforts.
 
 </details>

@@ -1,21 +1,22 @@
-## ex26: Tag Food-Related Parts
+## ex26: Tag Parts Named After Suspicious Keywords
 
 > **Type:** Core | **Track:** SQL Detective  
 >
-> **Difficulty:** 3 / 10
+> **Difficulty:** 4 / 10
 
 ### Business context
-The marketing team is reviewing our product naming strategy and noticed that several parts seem to be named after **food items** — like "almond", "tomato", or "chocolate". To explore this further, they’d like to understand how often such food-related terms appear in our catalog.
+With your audit workspace set up and your keyword list initialized, it’s time to run your first real check. The internal audit team has long suspected that parts in the product catalog may have been named using inconsistent or legacy conventions — including food items and other unrelated terms.
 
-Your task is to tag any part whose name includes specific food-related words and count how many products fall under each tag.
+You're asked to identify any parts whose names **match the suspicious tags** from your `tag_keywords` table and store them in a clean, labeled table for further review. This output will serve as your first **fact table** in the audit pipeline.
 
 **Business logic & definitions:**
-* food tags of interest: `'almond'`, `'tomato'`, `'chocolate'`, `'vanilla'`, `'peach'`
-* food term match: case-insensitive substring match in part name
+* Matching logic: case-insensitive substring match between `P_NAME` and `tag_keywords.tag_label`
+* Table design: output should include part key, name, and matching tag
+* Storage: save as `WORKSHOP_DB.TEMP_SCHEMA.flagged_parts_by_tag`
 
 ### Starter query
 ```sql
--- Explore part names to get a feel for naming patterns
+-- Explore some part names to see patterns
 SELECT
     P_PARTKEY,
     P_NAME
@@ -26,27 +27,31 @@ LIMIT 10;
 ### Required datasets
 
 * `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART`
+* `WORKSHOP_DB.TEMP_SCHEMA.tag_keywords`
 
 <details>
 <summary>💡 Hint (click to expand)</summary>
 
 #### How to think about it
 
-Use a `CASE` statement to assign each part a food label if the part name contains a matching term (e.g., `ILIKE '%almond%'`). Group by this tag to count how many times each appears.
+This is a **semi-join pattern**: you’ll check if each `P_NAME` contains any of the values listed in the `tag_keywords` table.
 
-Use `LOWER(P_NAME)` or `ILIKE` to make your checks case-insensitive.
+Use a `JOIN` where the condition is:
+```sql
+P_NAME ILIKE '%' || tag_keywords.tag_label || '%'
+```
+
+This allows dynamic, case-insensitive substring matching between the part names and your keywords.
+
+Once your logic works, wrap the query in a `CREATE TABLE` statement to persist the results.
 
 #### Helpful SQL concepts
 
-`CASE`, `ILIKE`, `GROUP BY`, `COUNT()`
+`ILIKE`, `JOIN ON`, dynamic matching, `CREATE TABLE AS`
 
 ```sql
 -- Example pattern
-CASE
-  WHEN P_NAME ILIKE '%almond%' THEN 'almond'
-  WHEN P_NAME ILIKE '%tomato%' THEN 'tomato'
-  …
-END
+JOIN tag_keywords k ON part.P_NAME ILIKE '%' || k.tag_label || '%'
 ```
 
 </details>
@@ -57,46 +62,47 @@ END
 #### Working query
 
 ```sql
+-- Step 1: Create a new table with flagged part names
+CREATE OR REPLACE TABLE WORKSHOP_DB.TEMP_SCHEMA.flagged_parts_by_tag AS
 SELECT
-    CASE
-        WHEN P_NAME ILIKE '%almond%' THEN 'almond'
-        WHEN P_NAME ILIKE '%tomato%' THEN 'tomato'
-        WHEN P_NAME ILIKE '%chocolate%' THEN 'chocolate'
-        WHEN P_NAME ILIKE '%vanilla%' THEN 'vanilla'
-        WHEN P_NAME ILIKE '%peach%' THEN 'peach'
-        ELSE NULL
-    END AS food_tag,
-    COUNT(*) AS part_count
-FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART
-WHERE P_NAME ILIKE '%almond%'
-   OR P_NAME ILIKE '%tomato%'
-   OR P_NAME ILIKE '%chocolate%'
-   OR P_NAME ILIKE '%vanilla%'
-   OR P_NAME ILIKE '%peach%'
-GROUP BY food_tag
-ORDER BY part_count DESC;
+    p.P_PARTKEY,
+    p.P_NAME,
+    k.tag_label AS matched_tag
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.PART p
+JOIN WORKSHOP_DB.TEMP_SCHEMA.tag_keywords k
+  ON p.P_NAME ILIKE '%' || k.tag_label || '%';
+```
+
+```sql
+-- Step 2: Inspect your audit output
+SELECT * FROM WORKSHOP_DB.TEMP_SCHEMA.flagged_parts_by_tag
+ORDER BY matched_tag, P_NAME;
 ```
 
 #### Why this works
 
-The `CASE` logic applies a label to each part name based on food terms, and the `GROUP BY` aggregates how many times each label occurs.
+Instead of hardcoding terms, you dynamically joined the keyword list with the part catalog using a flexible `ILIKE` pattern. You then stored this tagged subset into a reusable audit table.
+
+This simulates the first stage in a real data pipeline: **identifying and flagging records based on reference logic**, and saving the results for downstream checks.
 
 #### Business answer
 
-The most common food term in our part catalog is `"tomato"`, followed closely by `"almond"` — showing a clear trend in naming preferences.
+The audit reveals dozens of parts whose names contain suspicious keywords like `"almond"` and `"tomato"`. This confirms inconsistent naming conventions and justifies further review of catalog standards.
 
 #### Take-aways
 
-* `ILIKE` is great for case-insensitive substring checks in unstructured text fields
-* `CASE` + `GROUP BY` provides a powerful tagging and counting mechanism
-* Smart filtering (`WHERE`) reduces unnecessary compute on irrelevant rows
-* You could have used a CTE where you `UNION ALL` the food terms, to later `LEFT JOIN` and `COALESCE` zero-counts as 0
+* Dynamic string matching using `ILIKE` + `JOIN` allows modular pattern tagging
+* Avoid hardcoding logic — reusable reference tables are more scalable
+* Storing audit outputs in new tables simulates a fact table or staging layer
+* This output can now be enriched, visualized, or used for compliance review
 
 </details>
 
 <details>
 <summary>🎁 Bonus Exercise (click to expand)</summary>
 
-Add a second column to the output that shows the **percentage share** of each food tag in the overall food-tagged part list.
+Add a new column to `flagged_parts_by_tag` that shows the **length of the part name** and another that flags any names over 40 characters as `"long_name" = TRUE`.
+
+This simulates a **secondary audit rule** on naming conventions.
 
 </details>

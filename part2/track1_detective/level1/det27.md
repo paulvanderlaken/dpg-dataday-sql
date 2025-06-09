@@ -1,24 +1,26 @@
-## ex27: Customers Without Any Orders
+## ex27: Identify Customers with No Orders
 
 > **Type:** Core | **Track:** SQL Detective  
 >
 > **Difficulty:** 3 / 10
 
 ### Business context
-While reviewing our customer activity logs, the operations team noticed that some customer accounts appear to have **never placed an order**. This might indicate onboarding drop-off, abandoned registrations, or incomplete data imports.
+As part of your audit initiative, the operations lead has asked for a review of **customer activity records**. There are concerns that some accounts were imported from legacy systems but never became active — possibly due to onboarding issues or incomplete migrations.
 
-You’ve been asked to identify which customers have **no matching orders** in our system.
+Your task is to identify all customers who **have never placed a single order** — and store them in a separate table for further investigation by the customer success team.
 
 **Business logic & definitions:**
-* inactive customer: a record in `CUSTOMER` with **no corresponding entry** in the `ORDERS` table via `C_CUSTKEY = O_CUSTKEY`
+* Inactive customer: a record in `CUSTOMER` that has **no matching orders** in `ORDERS`
+* Matching logic: link on `C_CUSTKEY = O_CUSTKEY`
+* Output: store results in `WORKSHOP_DB.TEMP_SCHEMA.inactive_customers`
 
 ### Starter query
 ```sql
--- Preview customer keys and a few other attributes
+-- Preview the customer table
 SELECT
     C_CUSTKEY,
     C_NAME,
-    C_ACCTBAL
+    C_MKTSEGMENT
 FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER
 LIMIT 10;
 ```
@@ -33,15 +35,23 @@ LIMIT 10;
 
 #### How to think about it
 
-Use a **LEFT JOIN** from `CUSTOMER` to `ORDERS` to preserve all customers — even those who don’t match. Then use `WHERE O_ORDERKEY IS NULL` to isolate those that never ordered.
+You're detecting **orphaned records**: customers that exist in the system but never made a transaction.
 
-This is known as an **anti-join** — a pattern that helps find missing links between tables.
+Use a `LEFT JOIN` from `CUSTOMER` to `ORDERS` to retain all customers. Then apply a filter:  
+```sql
+WHERE O_ORDERKEY IS NULL
+```
+
+This is called an **anti-join**, and it's one of the most reliable ways to catch “missing” relationships.
+
+Once you're confident the logic works, wrap it inside a `CREATE TABLE AS` to persist it for later audits.
 
 #### Helpful SQL concepts
 
-`LEFT JOIN`, `IS NULL`
+`LEFT JOIN`, `IS NULL`, `CREATE TABLE AS`
 
 ```sql
+-- Anti-join pattern
 SELECT …
 FROM A
 LEFT JOIN B ON A.key = B.key
@@ -56,6 +66,8 @@ WHERE B.key IS NULL;
 #### Working query
 
 ```sql
+-- Step 1: Create a table of inactive customers
+CREATE OR REPLACE TABLE WORKSHOP_DB.TEMP_SCHEMA.inactive_customers AS
 SELECT
     c.C_CUSTKEY,
     c.C_NAME,
@@ -64,29 +76,40 @@ SELECT
 FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.CUSTOMER c
 LEFT JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS o
   ON c.C_CUSTKEY = o.O_CUSTKEY
-WHERE o.O_ORDERKEY IS NULL
-ORDER BY c.C_CUSTKEY;
+WHERE o.O_ORDERKEY IS NULL;
+```
+
+```sql
+-- Step 2: View your audit result
+SELECT * FROM WORKSHOP_DB.TEMP_SCHEMA.inactive_customers
+ORDER BY C_CUSTKEY;
 ```
 
 #### Why this works
 
-This query uses a `LEFT JOIN` to retain all customers, including those without orders. By filtering on `O_ORDERKEY IS NULL`, we isolate the customers who have **no orders recorded**.
+The `LEFT JOIN` ensures all customers are kept, even if they didn’t place any orders. Filtering on `O_ORDERKEY IS NULL` isolates those with no match.
+
+You’ve also saved this to your audit schema, so this list can be handed off to the customer success team for follow-up actions.
 
 #### Business answer
 
-Thousands of customers appear in our database without any order history — an opportunity for re-engagement or data quality review.
+There are hundreds of customer records that never placed an order — potentially abandoned signups or incomplete data migrations.
 
 #### Take-aways
 
-* `LEFT JOIN + IS NULL` is the go-to pattern for detecting missing links
-* Anti-joins are valuable for auditing relationships between datasets
-* This pattern scales well to more complex relationship integrity checks
+* Anti-joins (`LEFT JOIN … IS NULL`) are essential tools for data integrity audits
+* These patterns scale well to many-to-many and complex multi-table joins
+* Persisting orphaned records in dedicated tables allows downstream remediation
+* Every pipeline or data model needs tests for “presence of expected links”
 
 </details>
 
 <details>
 <summary>🎁 Bonus Exercise (click to expand)</summary>
 
-Group the customers without orders by their **market segment (`C_MKTSEGMENT`)**. Which segments have the most inactive customers?
+Group the inactive customers by `C_MKTSEGMENT` and count how many appear in each. Store this as a summary table:  
+`WORKSHOP_DB.TEMP_SCHEMA.inactive_customer_counts_by_segment`
+
+This will support visualizations or alerts by segment type.
 
 </details>
