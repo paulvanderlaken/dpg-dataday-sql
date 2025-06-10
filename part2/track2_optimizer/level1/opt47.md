@@ -87,9 +87,9 @@ This optimized query returns all orders placed in **March 1995 and March 1996**,
 
 #### Take-aways
 
-* Use **explicit date ranges** to capture specific months — even across multiple years.
 * Avoid `EXTRACT()` on filtered columns if you care about performance.
 * Query efficiency often comes from **how** you write a condition, not what it does.
+* Do not forget about readability and understandability while optimizing for performance.
 
 </details>
 
