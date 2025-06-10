@@ -5,18 +5,35 @@
 > **Difficulty:** 7 / 10
 
 ### Business context
-The compliance team often investigates **orders with unusually high total revenue**. Until now, they’ve relied on analysts manually running percentile queries to determine thresholds.
+The compliance team routinely audits unusually large orders — but the manual SQL workflow they use is cumbersome and rigid. It involves calculating the **99th percentile** of order-level revenue in a common table expression, then filtering based on that value.
 
-You’ve been asked to automate this by building a **stored block** that:
-- Calculates a **dynamic revenue threshold** based on the 99th percentile,
-- Filters orders above that threshold,
-- Returns their `order key`, `customer key`, and calculated total revenue.
+Now that more of these checks are being automated, your team is exploring **procedural SQL logic** to structure and modularize threshold logic for reuse in audits, dashboards, and alerts.
 
-This logic should be encapsulated using **`DECLARE`**, **`BEGIN...END`**, and **control-of-flow constructs**.
+Here's a quick starter on [Procedural SQL](https://www.geeksforgeeks.org/plsql-introduction/) for those new to it.
 
 **Business logic & definitions:**
 * Revenue per order = sum of `L_EXTENDEDPRICE * (1 - L_DISCOUNT)` grouped by `L_ORDERKEY`
 * High revenue threshold = 99th percentile of order revenue across all data
+* Procedural SQL logic: use **`DECLARE`, `SET`, and `BEGIN...END`** so the threshold becomes dynamical and reuseable
+
+### Query to optimise
+
+```sql
+WITH revenue_per_order AS (
+  SELECT L_ORDERKEY,
+         SUM(L_EXTENDEDPRICE * (1 - L_DISCOUNT)) AS revenue
+  FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM
+  GROUP BY L_ORDERKEY
+),
+threshold AS (
+  SELECT PERCENTILE_CONT(0.99) 
+  WITHIN GROUP (ORDER BY revenue) AS cutoff
+  FROM revenue_per_order
+)
+SELECT o.L_ORDERKEY, o.revenue
+FROM revenue_per_order o, threshold t
+WHERE o.revenue > t.cutoff;
+```
 
 ### Required datasets
 
@@ -27,15 +44,14 @@ This logic should be encapsulated using **`DECLARE`**, **`BEGIN...END`**, and **
 
 #### How to think about it
 
-You’ll need to:
-1. Use a `DECLARE` block to store the dynamic threshold
-2. Compute the threshold using `PERCENTILE_CONT`
-3. Reference the threshold variable in a second statement that selects order-level revenue above the cutoff
+You’re being asked to **modularize and generalize** the logic. That means:
 
-Remember:
-- Wrap your logic in a `BEGIN … END` block
-- Use `SET` to assign query results to variables
-- Variables need a data type
+1. Use `DECLARE` to define a variable that holds the threshold.
+2. Use `SET` to assign the 99th percentile revenue to that variable.
+3. Use that variable in a second statement to filter and return the matching orders.
+4. Wrap the logic in `BEGIN … END`.
+
+This makes the script **more reusable and parameterizable**, and allows for future branching.
 
 #### Helpful SQL concepts
 
@@ -44,8 +60,8 @@ Remember:
 ```sql
 DECLARE rev_cutoff FLOAT;
 BEGIN
-  SET rev_cutoff = (SELECT … FROM …);
-  SELECT … FROM … WHERE revenue > rev_cutoff;
+  SET rev_cutoff = (SELECT …);
+  SELECT … WHERE revenue > rev_cutoff;
 END;
 ```
 
@@ -81,47 +97,22 @@ BEGIN
 END;
 ```
 
-<details>
-<summary>⚡ Non-procedural (set-based) alternative</summary>
-
-```sql
-WITH revenue_per_order AS (
-  SELECT L_ORDERKEY,
-         SUM(L_EXTENDEDPRICE * (1 - L_DISCOUNT)) AS revenue
-  FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM
-  GROUP BY L_ORDERKEY
-),
-threshold AS (
-  SELECT PERCENTILE_CONT(0.99) 
-  WITHIN GROUP (ORDER BY revenue) AS cutoff
-  FROM revenue_per_order
-)
-SELECT o.L_ORDERKEY, o.revenue
-FROM revenue_per_order o, threshold t
-WHERE o.revenue > t.cutoff;
-```
-
-This version avoids procedural scripting entirely and keeps everything in a single, efficient execution plan using CTEs. It is preferred for performance-critical and ad hoc queries.
-
-</details>
-
 #### Why this works
 
-The procedural version uses `DECLARE` and `SET` to separate threshold calculation from its application — which is helpful in stored logic or when the threshold is reused.  
-This approach avoids manually editing the threshold in the query, improving **automation**, **safety**, and **reusability**.
+This version refactors the set-based percentile logic into a **procedural control block**, allowing the threshold value to be assigned once and reused in multiple operations or control paths. It increases flexibility, readability, and maintainability for audit logic.
 
-However, for ad hoc queries or dashboards, the **non-procedural CTE version is more efficient**, because it stays fully set-based and can be better optimized by Snowflake's planner.
+That said, **performance is slightly worse** than the pure CTE version — because query optimization and planner access may be more limited. Use this pattern when you need scripting structure, not just efficiency.
 
 #### Business answer
 
-The result is a dynamic list of **the top 1% highest-revenue orders** — determined from all transactions using a statistically defined cutoff. This helps compliance isolate financial outliers without hardcoding thresholds.
+The result is a dynamic list of **the top 1% of revenue-generating orders**, defined automatically from the dataset. This removes guesswork and manual filtering when flagging high-impact transactions.
 
 #### Take-aways
 
-* `DECLARE` + `BEGIN...END` is ideal for building **modular, reusable logic**, especially in stored procedures or templated pipelines.
-* But for **performance-sensitive or one-off analysis**, a CTE-based version is usually **simpler and faster**.
-* Use `SET` to capture scalar values like percentiles or counts when needed across multiple query stages.
-* Always weigh readability and reuse against performance — procedural logic introduces structure but may reduce planner flexibility.
+* `DECLARE` + `BEGIN...END` adds structure to your SQL logic — ideal for audit routines or stored procedures.
+* **Use it when you want modular, reusable scripts**, or need variables to persist across multiple blocks.
+* But for pure performance and optimization, **a set-based query using CTEs is usually faster**.
+* Know when you need control-flow logic, and when a clean SELECT is better.
 
 </details>
 
