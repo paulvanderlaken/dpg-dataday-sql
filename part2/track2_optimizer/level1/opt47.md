@@ -75,6 +75,8 @@ This rewritten query uses **two precise date ranges**, one for each March. Snowf
 
 All while returning the exact same result.
 
+Plus, the query is arguably more readible, as each `WHERE` statement reflects an isolated, intentional filter, with the demarcations mentioned explictly. 
+
 #### Business answer
 
 This optimized query returns all orders placed in **March 1995 and March 1996**, scanning only those two months from the entire ORDERS table. Compared to the original:
