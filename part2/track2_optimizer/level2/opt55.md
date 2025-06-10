@@ -68,6 +68,27 @@ $$;
 <details>
 <summary>✅ Solution (click to expand)</summary>
 
+<details>
+<summary> Note: you might need to <b>create a database</b> to store the procedure in. </summary>
+
+```sql
+-- Step 1: Create your database
+CREATE OR REPLACE DATABASE WORKSHOP_DB;
+```
+
+```sql
+-- Step 2: Create your schema
+CREATE OR REPLACE SCHEMA WORKSHOP_DB.TEMP_SCHEMA;
+```
+
+```sql
+-- Step 3: Set your session context
+USE DATABASE WORKSHOP_DB;
+USE SCHEMA TEMP_SCHEMA;
+```
+
+</details>
+
 #### Working procedure
 
 ```sql
@@ -92,24 +113,6 @@ BEGIN
   RETURN v_revenue;
 END;
 $$;
-```
-
-> Note: You might need to **create a database** to store the procedure in.
-
-```sql
--- Step 1: Create your database
-CREATE OR REPLACE DATABASE WORKSHOP_DB;
-```
-
-```sql
--- Step 2: Create your schema
-CREATE OR REPLACE SCHEMA WORKSHOP_DB.TEMP_SCHEMA;
-```
-
-```sql
--- Step 3: Set your session context
-USE DATABASE WORKSHOP_DB;
-USE SCHEMA TEMP_SCHEMA;
 ```
 
 
