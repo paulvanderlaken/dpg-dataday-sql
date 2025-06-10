@@ -1,68 +1,66 @@
-## ex55: Use DECLARE and BEGIN…END to Create Dynamic Threshold Logic
+## ex56: Parameterised Procedure for Total Revenue Calculation
 
-> **Type:** Stretch | **Track:** Query Optimizer  
+> **Type:** Core | **Track:** Query Optimizer
 >
-> **Difficulty:** 7 / 10
+> **Difficulty:** 5 / 10
 
 ### Business context
-The compliance team routinely audits unusually large orders — but the manual SQL workflow they use is cumbersome and rigid. It involves calculating the **99th percentile** of order-level revenue in a common table expression, then filtering based on that value.
 
-Now that more of these checks are being automated, your team is exploring **procedural SQL logic** to structure and modularize threshold logic for reuse in audits, dashboards, and alerts.
-
-Here's a quick starter on [Procedural SQL](https://www.geeksforgeeks.org/plsql-introduction/) for those new to it.
+Finance teams often need quick revenue totals for ad-hoc queries—monthly campaign checks, quarter closes, or regulatory filings. Right now analysts copy-paste a hard-coded SQL snippet and adjust the dates by hand, an error-prone workflow. You’ve been asked to refactor that query into a **reusable stored procedure** that takes a start and end date as parameters and returns the total revenue for the period.
 
 **Business logic & definitions:**
-* Revenue per order = sum of `L_EXTENDEDPRICE * (1 - L_DISCOUNT)` grouped by `L_ORDERKEY`
-* High revenue threshold = 99th percentile of order revenue across all data
-* Procedural SQL logic: use **`DECLARE`, `SET`, and `BEGIN...END`** so the threshold becomes dynamical and reuseable
 
-### Query to optimise
+* **Order revenue:** `SUM(L_EXTENDEDPRICE * (1 - L_DISCOUNT))`
+* **Time window:** `O_ORDERDATE` between the supplied `p_start_date` and `p_end_date` (inclusive)
+* **Total revenue:** a single numeric value summarising all order revenue in the window
+
+
+### Query to rewrite
 
 ```sql
-WITH revenue_per_order AS (
-  SELECT L_ORDERKEY,
-         SUM(L_EXTENDEDPRICE * (1 - L_DISCOUNT)) AS revenue
-  FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM
-  GROUP BY L_ORDERKEY
-),
-threshold AS (
-  SELECT PERCENTILE_CONT(0.99) 
-  WITHIN GROUP (ORDER BY revenue) AS cutoff
-  FROM revenue_per_order
-)
-SELECT o.L_ORDERKEY, o.revenue
-FROM revenue_per_order o, threshold t
-WHERE o.revenue > t.cutoff;
+-- Hard-coded version: total revenue for calendar year 1995
+SELECT
+    SUM(l.L_EXTENDEDPRICE * (1 - l.L_DISCOUNT)) AS total_revenue
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS   o
+JOIN SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM l
+  ON l.L_ORDERKEY = o.O_ORDERKEY
+WHERE o.O_ORDERDATE BETWEEN '1995-01-01' AND '1995-12-31';
 ```
 
 ### Required datasets
 
-* `SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM`
+* `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS`
+* `SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM`
 
 <details>
 <summary>💡 Hint (click to expand)</summary>
 
 #### How to think about it
 
-You’re being asked to **modularize and generalize** the logic. That means:
-
-1. Use `DECLARE` to define a variable that holds the threshold.
-2. Use `SET` to assign the 99th percentile revenue to that variable.
-3. Use that variable in a second statement to filter and return the matching orders.
-4. Wrap the logic in `BEGIN … END`.
-
-This makes the script **more reusable and parameterizable**, and allows for future branching.
+1. Wrap the logic in `CREATE OR REPLACE PROCEDURE … (p_start_date DATE, p_end_date DATE)`.
+2. Use `DECLARE` to create a variable for the revenue total.
+3. Execute `SELECT … INTO :variable` to assign the aggregate.
+4. `RETURN variable;` at the end of the block.
+5. Test with `CALL total_revenue_proc('1996-01-01','1996-03-31');`.
 
 #### Helpful SQL concepts
 
-`DECLARE`, `BEGIN…END`, `SET`, `FLOAT`, `PERCENTILE_CONT`, `GROUP BY`
+`CREATE OR REPLACE PROCEDURE`, `DECLARE`, `SELECT … INTO`, `RETURN`, `DATE` literals
 
 ```sql
-DECLARE rev_cutoff FLOAT;
+CREATE OR REPLACE PROCEDURE demo_proc(p_start DATE, p_end DATE)
+RETURNS NUMBER
+LANGUAGE SQL
+AS
+$$
+DECLARE rev NUMBER;
 BEGIN
-  SET rev_cutoff = (SELECT …);
-  SELECT … WHERE revenue > rev_cutoff;
+  SELECT SUM(...) INTO :rev
+  FROM …
+  WHERE … BETWEEN :p_start AND :p_end;
+  RETURN rev;
 END;
+$$;
 ```
 
 </details>
@@ -70,59 +68,97 @@ END;
 <details>
 <summary>✅ Solution (click to expand)</summary>
 
-#### Working query (procedural version)
+#### Working procedure
 
 ```sql
-DECLARE rev_cutoff FLOAT;
-
+CREATE OR REPLACE PROCEDURE total_revenue_proc(
+    p_start_date DATE,
+    p_end_date   DATE
+)
+RETURNS NUMBER
+LANGUAGE SQL
+AS
+$$
+DECLARE
+  v_revenue NUMBER;
 BEGIN
-  -- Step 1: calculate threshold
-  SET rev_cutoff = (
-    SELECT PERCENTILE_CONT(0.99) 
-    WITHIN GROUP (ORDER BY revenue)
-    FROM (
-      SELECT L_ORDERKEY,
-             SUM(L_EXTENDEDPRICE * (1 - L_DISCOUNT)) AS revenue
-      FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM
-      GROUP BY L_ORDERKEY
-    )
-  );
+  SELECT  SUM(l.L_EXTENDEDPRICE * (1 - l.L_DISCOUNT))
+    INTO  :v_revenue
+  FROM    SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.ORDERS   o
+  JOIN    SNOWFLAKE_SAMPLE_DATA.TPCH_SF1.LINEITEM l
+         ON l.L_ORDERKEY = o.O_ORDERKEY
+  WHERE   o.O_ORDERDATE BETWEEN :p_start_date AND :p_end_date;
 
-  -- Step 2: output high-revenue orders
-  SELECT L_ORDERKEY,
-         SUM(L_EXTENDEDPRICE * (1 - L_DISCOUNT)) AS order_revenue
-  FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.LINEITEM
-  GROUP BY L_ORDERKEY
-  HAVING order_revenue > rev_cutoff;
+  RETURN v_revenue;
 END;
+$$;
 ```
+
+> Note: You might need to **create a database** to store the procedure in.
+
+```sql
+-- Step 1: Create your database
+CREATE OR REPLACE DATABASE WORKSHOP_DB;
+```
+
+```sql
+-- Step 2: Create your schema
+CREATE OR REPLACE SCHEMA WORKSHOP_DB.TEMP_SCHEMA;
+```
+
+```sql
+-- Step 3: Set your session context
+USE DATABASE WORKSHOP_DB;
+USE SCHEMA TEMP_SCHEMA;
+```
+
 
 #### Why this works
 
-This version refactors the set-based percentile logic into a **procedural control block**, allowing the threshold value to be assigned once and reused in multiple operations or control paths. It increases flexibility, readability, and maintainability for audit logic.
-
-That said, **performance is slightly worse** than the pure CTE version — because query optimization and planner access may be more limited. Use this pattern when you need scripting structure, not just efficiency.
+* **Parameterised dates** make the logic reusable for any timeframe.
+* `SELECT … INTO` stores the aggregate in a variable, and `RETURN` emits it as the procedure’s result.
+* The query scans the joined tables exactly once, keeping the plan simple and efficient.
 
 #### Business answer
 
-The result is a dynamic list of **the top 1% of revenue-generating orders**, defined automatically from the dataset. This removes guesswork and manual filtering when flagging high-impact transactions.
+Calling
+
+```sql
+CALL total_revenue_proc('1995-01-01','1995-12-31');
+```
+
+returns a single number—the total sales revenue for calendar-year 1995.
 
 #### Take-aways
 
-* `DECLARE` + `BEGIN...END` adds structure to your SQL logic — ideal for audit routines or stored procedures.
-* **Use it when you want modular, reusable scripts**, or need variables to persist across multiple blocks.
-* But for pure performance and optimization, **a set-based query using CTEs is usually faster**.
-* Know when you need control-flow logic, and when a clean SELECT is better.
+* Turning static SQL into a procedure removes hard-coded literals and copy-paste risk.
+* Input parameters convert the query into a callable mini-API for dashboards, tasks, or external tools.
+* Small, single-purpose procedures are easy to test, version, and grant execute rights on.
+* Always ensure date parameters are **inclusive** so totals align with financial reporting periods.
 
 </details>
 
 <details>
 <summary>🎁 Bonus Exercise (click to expand)</summary>
 
-Modify the script to:
-- Accept a **parameterized percentile value** (e.g. `0.97` instead of `0.99`)
-- Return the **count of orders** above threshold rather than their keys
+**Extend the procedure** with an optional customer filter:
 
-Can you generalize this to support both modes using an `IF` block?
+```sql
+CREATE OR REPLACE PROCEDURE total_revenue_proc(
+    p_start_date DATE,
+    p_end_date   DATE,
+    p_cust_key   NUMBER DEFAULT NULL
+)
+```
+
+*If `p_cust_key` is `NULL`* → return revenue for **all** customers.
+*Else* → return revenue only for that customer.
+Hint: add
+
+```sql
+AND (:p_cust_key IS NULL OR o.O_CUSTKEY = :p_cust_key)
+```
+
+to the `WHERE` clause.
 
 </details>
