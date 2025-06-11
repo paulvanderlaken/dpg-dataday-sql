@@ -119,12 +119,15 @@ Each track builds from a Level 1 (Intermediate) base and ascends to Level 2 (Adv
 
 #### Level 2: Intermediate → Advanced
 
-| Ex # | Title | Business Question | SQL Concept | Difficulty | Dataset Familiarity Focus |
-| :----: | -------------------------------------------- | ------------------- | ------------------------------------- | :----------: | --------------------------------------------------- |
-| ex36 | Model an Efficient Audit Flag for Inactive Customers | “How can we efficiently flag inactive customers while maintaining audit traceability?” | `CREATE TABLE`, `ALTER TABLE`, `INSERT`, `LEFT JOIN`, `TIMESTAMP` | 6 | Audit flag tables, customer & orders data |
-| ex38 | Flag VIP Overrides for Strategic Exceptions | “How do we flag VIP customers as exceptions in the audit log without deleting previous flags?” | `ALTER TABLE`, `INSERT`, `TEMP TABLE`, `NTILE`, `QUALIFY` | 7 | Audit flag tables, order counts, line-item revenue |
-| ex39 | Inspect the Raw Audit Log using Time Travel | “How can we use Snowflake Time Travel to compare audit log states before and after VIP overrides?” | `AT(TIMESTAMP)`, `AT(OFFSET)`, `JOIN`, `CURRENT_TIMESTAMP` | 7 | Audit flag tables with timestamps, Snowflake Time Travel |
-| ex40 | Build a Comprehensive Audit Staging View | “How can we synthesise all audit flags with customer metadata to enable business reporting and slicing?” | `CREATE VIEW`, `JOIN`, dimension enrichment, `TIMESTAMP` | 8 | Audit flags enriched with customer, nation & region data |
+#### Level 2: Intermediate → Advanced
+
+| Ex # | Title                                               | Business Question                                                                                                          | SQL Concept                                              | Difficulty | Dataset Familiarity Focus |
+| :--: | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | :--------: | -------------------------- |
+| ex36 | Model an Efficient Audit Flag for Inactive Customers | How can we efficiently flag inactive customers while maintaining audit traceability?                                      | `CREATE TABLE`, `ALTER TABLE`, `INSERT`, `LEFT JOIN`, `TIMESTAMP` | 6 | Audit flag tables, customer & orders data |
+| ex37 | Append New Audit Flags for Duplicate Customer Records | How can we flag customers showing negative balances while maintaining a clean and interpretable audit trail?              | `DELETE`, `INSERT`, conditional anomaly logic, `JOIN`    | 6 | Customer data with account balance |
+| ex38 | Flag VIP Overrides for Strategic Exceptions         | How do we flag VIP customers as exceptions in the audit log without deleting previous flags?                              | `TEMP TABLE`, `NTILE`, `QUALIFY`, `INSERT`               | 7 | Orders, line-item revenue, audit tables |
+| ex39 | Inspect the Raw Audit Log using Time Travel         | How can we use Snowflake Time Travel to compare audit log states before and after VIP overrides?                          | `AT(TIMESTAMP)`, `AT(OFFSET)`, audit trail verification  | 7 | Snowflake Time Travel on audit logs |
+| ex40 | Build a Comprehensive Audit Staging View            | How can we synthesise all audit flags with customer metadata to enable business reporting and slicing?                    | `CREATE VIEW`, `JOIN`, dimension enrichment, `TIMESTAMP` | 8 | Audit logs enriched with customer, nation & region context |
 
 ---
 
