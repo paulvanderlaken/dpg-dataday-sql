@@ -1,8 +1,64 @@
-# Full-Day SQL Workshop Matrix – Core & Stretch Paths
+# 🧭 Snowflake SQL Workshop Roadmap
 
-## Part 1
+This full-day workshop is structured across two parts:
 
-#### Beginner → Intermediate
+- **Part 1** builds baseline fluency and confidence in SQL querying, with dedicated exercises for beginners, intermediate, and advanced users.
+- **Part 2** splits into three thematic learning tracks — each deepening specific skill sets — again offered at two specific capability-levels.
+
+---
+
+## 🚦 Part 1: Core SQL Fluency
+
+| Level              | Exercises      | Skills & Focus Areas                                                                 |
+|-------------------|----------------|---------------------------------------------------------------------------------------|
+| 1: Beginner | ex01–ex10   | Filtering, joining, grouping basics | Learn to extract, sort, and combine relevant data from key TPCH tables             |
+| 2: Intermediate | ex11–ex20 | Aggregates, derived logic, time filtering | Add business logic, derived metrics, and multi-table design                         |
+| 3: Advanced | ex21–ex25   | Windows, cohorts, statistical flags   | Track growth, rank entities, flag outliers with advanced SQL patterns               |
+
+---
+
+## 🎯 Part 2: Thematic Mastery Tracks
+
+Each track builds from a Level 1 (Intermediate) base and ascends to Level 2 (Advanced). All are self-contained but benefit from strong Part 1 fundamentals.
+
+### 🔍 Track 1: SQL Detective
+
+| Level | Exercises    | Skills & Focus Areas                                                    |
+|-------|--------------|---------------------------------------------------------------------------|
+| 1: Beginner → Intermediate | ex25–ex30   | Detect gaps, nulls, missing records; pattern matching; suspicious records |
+| 2: Intermediate → Advanced | ex36–ex40   | Audit flag modeling, version tracking with Time Travel, dimensional enrichment |
+
+> **Ideal for:** Analysts auditing pipelines, ensuring data completeness, or building operational flags.
+
+---
+
+### ⚙️ Track 2: Query Optimizer
+
+| Level | Exercises    | Skills & Focus Areas                                                               |
+|-------|--------------|---------------------------------------------------------------------------|
+| 1: Beginner → Intermediate | ex46–ex54   | Filter pushdown, column pruning, subquery rewrites, CASE vs mapping joins |
+| 2: Intermediate → Advanced | ex55–ex61   | Procedural SQL, dynamic thresholds, JSON handling, window vs GROUP BY benchmarking |
+
+> **Ideal for:** Analysts and engineers optimizing query performance and compute efficiency in Snowflake.
+
+---
+
+### 🧠 Track 3: Business Strategist
+
+| Level | Exercises    | Focus Areas                                                               |
+|-------|--------------|---------------------------------------------------------------------------|
+| 1: Beginner → Intermediate | ex67–ex73   | Time trends, segment growth, product share, per-nation rankings |
+| 2: Intermediate → Advanced | ex74–ex81   | Profitability mapping, volume vs margin quadrants, correlation analysis, significance testing |
+
+> **Ideal for:** Commercial, finance, or strategy analysts using SQL for performance insights and data storytelling.
+
+---
+
+✅ Use this roadmap to pick the right exercises for your current skill level or business focus. Tracks are self-contained but build naturally from Part 1 foundations.
+
+## 🚦 Part 1: Core SQL Fluency
+
+#### Level 1: Beginner
 
 | Ex # | Title                                | Business Question                                                                                  | SQL Concept                      | Difficulty | Dataset Familiarity Focus                                | Track    | Core/Stretch | Stretch/Core Notes                                                  |
 |:----:|--------------------------------------|----------------------------------------------------------------------------------------------------|----------------------------------|:----------:|----------------------------------------------------------|----------|:-------------:|------------------------------------------------------------------------|
@@ -19,7 +75,7 @@
 
 ----
 
-#### Intermediate -> Advanced
+#### Level 2: Intermediate
 
 | Ex # | Title                                  | Business Question                                                                                                            | SQL Concept                           | Difficulty | Dataset Familiarity Focus                                             | Track    | Core/Stretch | Stretch/Core Notes                                                  |
 |:----:|----------------------------------------|------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|:----------:|------------------------------------------------------------------------|----------|:-------------:|------------------------------------------------------------------------|
@@ -35,7 +91,7 @@
 | ex20 | Rolling Daily Revenue Since Jan 1 1996 | “Show daily cumulative sales for all orders shipped since January 1, 1996.”                                                 | `SUM() OVER (ORDER BY)` + date filter |     6      | **LINEITEM**, **ORDERS**                                             | Part 1   | Stretch      | Builds on cumulative logic with filtered timeframe                   |
 
 
-#### Advanced -> Expert
+#### Level 3: Advanced
 
 | Ex # | Title                                              | Business Question                                                                                                                                           | SQL Concepts                                                                                               | Difficulty | Dataset Familiarity Focus                                                                                                            | Track    | Core/Stretch | Stretch/Core Notes                                                  |
 |:----:|----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|:----------:|---------------------------------------------------------------------------------------------------------------------------------------|----------|:-------------:|------------------------------------------------------------------------|
@@ -47,11 +103,11 @@
 
 ---
 
-## Part 2
+## 🎯 Part 2: Thematic Mastery Tracks
 
-### Track 1: SQL Detective
+### 🔍 Track 1: SQL Detective
 
-#### Beginner → Intermediate
+#### Level 1: Beginner → Intermediate
 | Ex # | Title                                        | Business Question                                                                                     | SQL Concept                         | Difficulty | Dataset Familiarity Focus                                           | Track         | Core/Stretch | Stretch/Core Notes                                                  |
 |:----:|----------------------------------------------|-------------------------------------------------------------------------------------------------------|-------------------------------------|:----------:|---------------------------------------------------------------------|---------------|:-------------:|------------------------------------------------------------------------|
 | ex25 | Create Audit Workspace + Tag Reference Table | “How can I create a safe audit schema and store a reusable list of suspicious naming patterns?”       | `CREATE DATABASE`, `SCHEMA`, `TABLE`, `INSERT` |     2      | **WORKSHOP_DB.TEMP_SCHEMA** (set up for audit use)                 | SQL Detective | Core         | Prepares personal sandbox and loads food-related tags for future joins |
@@ -61,7 +117,7 @@
 | ex29 | Flag High-Discount, High-Quantity Items      | “Which line items were sold in high quantity and at steep discounts?”                                | `WHERE`, compound filter, derive net revenue | 4 | **LINEITEM**                                        | SQL Detective | Core         | Combines filters + computed value, materializes for pricing review     |
 | ex30 | Identify Top 0.1% Revenue Orders             | “Which orders generated the highest revenue — the top 0.1% of all?”                                  | `PERCENTILE_CONT`, `CTE`, `LABEL`, `CREATE TABLE AS` | 5 | **LINEITEM**                              | SQL Detective | Core         | Distributional audit using statistical cutoff; labels strategic revenue drivers |
 
-#### Intermediate → Advanced
+#### Level 2: Intermediate → Advanced
 
 | Ex # | Title                                      | Business Question                                                                                       | SQL Concept                         | Difficulty | Dataset Familiarity Focus                                           | Track         | Core/Stretch | Stretch/Core Notes                                                  |
 |:----:|--------------------------------------------|-------------------------------------------------------------------------------------------------------|-------------------------------------|:----------:|---------------------------------------------------------------------|---------------|:-------------:|------------------------------------------------------------------------|
@@ -71,9 +127,9 @@
 | ex40 | Build a Comprehensive Audit Staging View    | “How can we synthesize all audit flags with customer metadata to enable business reporting and slicing?”| `CREATE VIEW`, `JOIN`, `DIMENSION ENRICHMENT`, `TIMESTAMP` | 8 | Audit flags enriched with customer, nation, and region data         | SQL Detective | Core         | Final capstone view combining audit and business context, ready for dashboards |
 
 ---
-### Track 2: Query Optimizer
+### ⚙️ Track 2: Query Optimizer
 
-#### Beginner → Intermediate
+#### Level 1: Beginner → Intermediate
 
 | Ex # | Title                                                | Business Question                                                               | SQL Concept                               | Difficulty | Dataset Focus            | Track           | Core/Stretch | Notes                                                                                            |
 | ---- | ---------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------- | ---------- | ------------------------ | --------------- | ------------ | ------------------------------------------------------------------------------------------------ |
@@ -88,7 +144,7 @@
 | ex54 | CASE WHEN vs Lookup Table                            | “Map customer segments to broader tiers using `CASE WHEN`. Then try replacing this with a small join.”  | CASE logic vs mapping table          | 4     | **CUSTOMER**             | Query Optimizer | Core         | Encourages dimensional joins over hardcoded logic                |
 
 
-#### Intermediate → Advanced
+#### Level 2: Intermediate → Advanced
 
 | Ex # | Title                                                   | Business Question                                                                                         | SQL Concept                              | Difficulty | Dataset Familiarity Focus                                | Track           | Core/Stretch | Stretch/Core Notes                                                                 |
 |:----:|---------------------------------------------------------|------------------------------------------------------------------------------------------------------------|-------------------------------------------|:----------:|----------------------------------------------------------|----------------|:-------------:|-------------------------------------------------------------------------------------|
@@ -98,14 +154,13 @@
 | ex58 | Parse Incoming JSON Order Payload into Rows                 | “How can we parse an incoming JSON order and flatten it into relational records?”                          | `FLATTEN`, `LATERAL`, `VARIANT`, JSON parsing | 7          | Simulated input via `PARSE_JSON()`                      | Query Optimizer | Stretch       | Serves as inverse to ex57; teaches ingestion and parsing of nested API inputs     |
 | ex59 | Tokenize and Flatten Supplier Comments for Text Mining      | “How can we break down supplier comments into individual lowercase words for analysis?”                    | `REGEXP_REPLACE`, `LOWER`, `SPLIT`, `FLATTEN` | 7          | `SUPPLIER` (S_COMMENT)                                 | Query Optimizer | Stretch       | Great for NLP pre-processing; reinforces `FLATTEN` in a text analytics context    |
 | ex60 | Nested Subqueries vs Multi-Stage CTEs — Which Scales Better? | “How does query structure affect performance when computing revenue, margins, and derived metrics?” | Subquery vs multi-CTE refactor, performance comparison, CASE expressions, SUM, AVG | 8 | **ORDERS**, **LINEITEM**, **PARTSUPP** | Query Optimizer | Stretch | Adds expensive derived logic to test impact of query structure on compute and runtime |
-
 | ex61 | Refactor Windowed Recency Logic with JOIN or GROUP BY | “What’s the fastest way to find the most recent order per customer — with correct results?” | `ROW_NUMBER()`, `QUALIFY`, `JOIN`, `GROUP BY`, performance trade-offs | 8 | **CUSTOMER**, **ORDERS** | Query Optimizer | Stretch | Shows how subtle logic changes affect result correctness and performance; highlights alternatives to window functions |
 
 ---
 
 ### Track 3: 🧠 Business Strategist
 
-#### Level 1: Beginner → Intermediate: Momentum Matters
+#### Level 1: Beginner → Intermediate
 
 | #    | Title                                               | Type | Difficulty | SQL Concept                             | Dataset Focus                |
 |------|-----------------------------------------------------|------|------------|------------------------------------------|------------------------------|
@@ -117,7 +172,7 @@
 | 72   | Monthly Revenue Share of Top-Selling Product        | Core | 6 / 10     | RANK, QUALIFY, % of total                | ORDERS + LINEITEM + PART     |
 | 73   | Year-over-Year Revenue Growth by Segment            | Core | 7 / 10     | LAG, partitioned time trends             | CUSTOMER + ORDERS + LINEITEM |
 
-#### Level 2: Intermediate → Advanced: Margin Matters (ex74–ex81)
+#### Level 2: Intermediate → Advanced
 
 | #    | Title                                               | Type | Difficulty | SQL Concept                             | Dataset Focus                  |
 |------|-----------------------------------------------------|------|------------|------------------------------------------|--------------------------------|
