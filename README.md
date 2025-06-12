@@ -224,14 +224,27 @@ You’ll conclude by synthesizing audit data with customer and geography metadat
 
 ### Track 2: 🛠️ Query Optimizer
 
-#### **Case 1+2: Code Cleanup Mission**
+#### **Case 1: Blame the Intern**
 
-> **You’re the new engineer on the analytics team.**
-> Your first task: refactor a pile of slow, unoptimized legacy queries that are wasting compute and confusing your teammates.
+> **Your queries are being throttled.**
+> The team suspects bloated scans and sloppy logic in some of the most frequently run dashboards. Your job: investigate and refactor the culprits, showing measurable improvements in performance.
 
-Each assignment gives you an inefficient query that technically “works” — but performs poorly. You’ll diagnose bottlenecks and rewrite smarter versions using best practices.
+This case focuses on **cleaning up inefficient logic** by filtering early, projecting only needed columns, and replacing unscalable constructs.
 
-⚙️ Output: Clean, performant queries — and performance reflection on row scan savings
+You'll compare query styles (`IN` vs `JOIN`, `CASE` vs lookup), reduce compute by restructuring joins and filters, and get familiar with Snowflake performance levers.
+
+🛠️ Output: Sharpened queries that reduce scanned rows, simplify logic, and scale more predictably
+
+---
+
+#### **Case 2: Mission Impossible**
+
+> **Now you’re on-call for the data engineering team.**
+> They need reusable, parameterized, production-safe SQL patterns — and expect them to handle semi-structured data and edge cases gracefully.
+
+This case dives into **advanced SQL engineering**: writing dynamic and modular SQL, parsing and generating JSON, and benchmarking alternate query plans. You’ll be responsible not just for writing queries — but making them reusable, scalable, and future-proof.
+
+🛠️ Output: Stored procedures, dynamic query templates, JSON payload handlers, and benchmarked refactors
 
 ---
 
