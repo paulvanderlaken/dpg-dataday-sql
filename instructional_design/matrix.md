@@ -120,8 +120,6 @@ Each track builds from a Level 1 (Intermediate) base and ascends to Level 2 (Adv
 
 #### Level 2: Intermediate → Advanced
 
-#### Level 2: Intermediate → Advanced
-
 | Ex # | Title                                               | Business Question                                                                                                          | SQL Concept                                              | Difficulty | Dataset Familiarity Focus |
 | :--: | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | :--------: | -------------------------- |
 | ex36 | Model an Efficient Audit Flag for Inactive Customers | How can we efficiently flag inactive customers while maintaining audit traceability?                                      | `CREATE TABLE`, `ALTER TABLE`, `INSERT`, `LEFT JOIN`, `TIMESTAMP` | 6 | Audit flag tables, customer & orders data |
